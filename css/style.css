@@ -1,0 +1,524 @@
+/* Where Is Al - Stylesheet */
+
+/* CSS Variables for Color Palette - Light Theme */
+:root {
+    --forest-green-dark: #2d5016;
+    --forest-green: #4a7c3a;
+    --earth-brown-dark: #6b4423;
+    --earth-brown: #8b6f47;
+    --trail-orange: #ff6b35;
+    --sky-blue: #87ceeb;
+    --sky-blue-light: #e0f2f1;
+    --white: #ffffff;
+    --off-white: #faf9f6;
+    --text-dark: #2c2c2c;
+    --text-light: #666666;
+    --bg-primary: var(--off-white);
+    --bg-secondary: var(--white);
+    --bg-gradient-start: var(--sky-blue-light);
+    --bg-gradient-end: var(--off-white);
+    --shadow-color: rgba(45, 80, 22, 0.15);
+    --shadow-color-light: rgba(45, 80, 22, 0.1);
+    --shadow-color-medium: rgba(45, 80, 22, 0.2);
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    --forest-green-dark: #5a9f3a;
+    --forest-green: #7bc55a;
+    --earth-brown-dark: #b88a5f;
+    --earth-brown: #c9a77d;
+    --trail-orange: #ff8c5a;
+    --sky-blue: #5a9fc9;
+    --sky-blue-light: #2a4a5a;
+    --white: #1a1a1a;
+    --off-white: #2a2a2a;
+    --text-dark: #e0e0e0;
+    --text-light: #b0b0b0;
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2a2a2a;
+    --bg-gradient-start: #1a2a2a;
+    --bg-gradient-end: #1a1a1a;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --shadow-color-light: rgba(0, 0, 0, 0.3);
+    --shadow-color-medium: rgba(0, 0, 0, 0.5);
+}
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Cabin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+    background-color: var(--bg-primary);
+    background-image: 
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 2px,
+            rgba(139, 111, 71, 0.03) 2px,
+            rgba(139, 111, 71, 0.03) 4px
+        );
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] body {
+    background-image: 
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 2px,
+            rgba(139, 111, 71, 0.08) 2px,
+            rgba(139, 111, 71, 0.08) 4px
+        );
+}
+
+/* Typography */
+h1, h2, h3 {
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+h1 {
+    font-size: 2.5rem;
+    color: var(--forest-green-dark);
+}
+
+h2 {
+    font-size: 2rem;
+    color: var(--forest-green-dark);
+    margin-bottom: 1.5rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+    color: var(--earth-brown-dark);
+}
+
+/* Password Page Styles */
+.password-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    padding: 1rem;
+}
+
+.password-container {
+    width: 100%;
+    max-width: 500px;
+}
+
+.password-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    box-shadow: 0 8px 24px var(--shadow-color);
+    text-align: center;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.password-card h1 {
+    margin-bottom: 2rem;
+    font-size: 2.25rem;
+}
+
+.password-prompt {
+    font-size: 1.25rem;
+    color: var(--text-dark);
+    margin-bottom: 2rem;
+    font-weight: 500;
+}
+
+.password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.password-input {
+    padding: 1rem;
+    font-size: 1rem;
+    border: 2px solid var(--earth-brown);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-dark);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    font-family: inherit;
+}
+
+.password-input:focus {
+    outline: none;
+    border-color: var(--trail-orange);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.password-button {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--trail-orange);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    font-family: inherit;
+}
+
+.password-button:hover {
+    background: #e55a2b;
+}
+
+[data-theme="dark"] .password-button:hover {
+    background: #ff9c7a;
+}
+
+.password-button:active {
+    transform: scale(0.98);
+}
+
+.password-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.3);
+}
+
+.error-message {
+    color: var(--trail-orange);
+    font-size: 0.95rem;
+    min-height: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.error-message.show {
+    opacity: 1;
+}
+
+/* Main Page Styles */
+.site-header {
+    background: linear-gradient(135deg, var(--forest-green-dark) 0%, var(--forest-green) 100%);
+    color: var(--white);
+    padding: 2rem 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px var(--shadow-color-medium);
+    position: relative;
+}
+
+.site-header h1 {
+    color: var(--white);
+    font-size: 2.5rem;
+}
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid var(--trail-orange);
+}
+
+/* Map Section */
+.map-section {
+    margin-bottom: 4rem;
+}
+
+.map-container {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px var(--shadow-color);
+    background: var(--bg-secondary);
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.map-container iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+}
+
+.map-placeholder {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-light);
+}
+
+.map-placeholder p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.map-placeholder-subtitle {
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+/* Stats Section */
+.stats-section {
+    margin-bottom: 4rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px var(--shadow-color-light);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    border-top: 4px solid var(--trail-orange);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px var(--shadow-color-medium);
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--forest-green-dark);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.stat-placeholder {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-style: italic;
+    margin-top: 0.5rem;
+}
+
+/* Captain's Log Section */
+.log-section {
+    margin-bottom: 4rem;
+}
+
+.log-container {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px var(--shadow-color-light);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.log-placeholder {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-light);
+    font-size: 1.1rem;
+    font-style: italic;
+}
+
+.log-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* Footer */
+.site-footer {
+    background: var(--forest-green-dark);
+    color: var(--white);
+    text-align: center;
+    padding: 2rem 1rem;
+    margin-top: 4rem;
+}
+
+.site-footer p {
+    color: var(--sky-blue-light);
+    font-size: 0.95rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+    }
+
+    .password-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .password-card h1 {
+        font-size: 1.75rem;
+    }
+
+    .site-header h1 {
+        font-size: 2rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+    }
+
+    .map-container {
+        min-height: 400px;
+    }
+
+    .map-container iframe {
+        height: 400px;
+    }
+
+    .log-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .password-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .password-prompt {
+        font-size: 1.1rem;
+    }
+
+    main {
+        padding: 1.5rem 0.75rem;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .theme-toggle {
+        width: 44px;
+        height: 44px;
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+
+    .theme-toggle svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Accessibility - Focus Styles */
+*:focus-visible {
+    outline: 2px solid var(--trail-orange);
+    outline-offset: 2px;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    background: var(--bg-secondary);
+    border: 2px solid var(--earth-brown);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    border-color: var(--trail-orange);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.3);
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--text-dark);
+    transition: fill 0.3s ease;
+}
+
+.theme-toggle .sun-icon {
+    display: block;
+}
+
+.theme-toggle .moon-icon {
+    display: none;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+    display: none;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+    display: block;
+}
+
+/* Password page theme toggle positioning */
+.password-page .theme-toggle {
+    position: absolute;
+}
+
+/* Print Styles */
+@media print {
+    .password-page,
+    .site-header,
+    .site-footer,
+    .theme-toggle {
+        display: none;
+    }
+
+    body {
+        background: white;
+    }
+}
+
