@@ -6,54 +6,48 @@
     const THEME_ATTRIBUTE = 'data-theme';
     const DEFAULT_THEME = 'light';
 
-    // Get current theme from localStorage or default to light
-    function getStoredTheme() {
+    const getStoredTheme = () => {
         try {
             return localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
-        } catch (e) {
+        } catch {
             return DEFAULT_THEME;
         }
-    }
+    };
 
-    // Save theme to localStorage
-    function saveTheme(theme) {
+    const saveTheme = (theme) => {
         try {
             localStorage.setItem(THEME_STORAGE_KEY, theme);
-        } catch (e) {
+        } catch {
             // Silently fail if localStorage is not available
         }
-    }
+    };
 
-    // Apply theme to document
-    function applyTheme(theme) {
+    const applyTheme = (theme) => {
         document.documentElement.setAttribute(THEME_ATTRIBUTE, theme);
         saveTheme(theme);
-    }
+    };
 
-    // Toggle between light and dark themes
-    function toggleTheme() {
+    const toggleTheme = () => {
         const currentTheme = document.documentElement.getAttribute(THEME_ATTRIBUTE) || DEFAULT_THEME;
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         applyTheme(newTheme);
-    }
+    };
 
-    // Initialize theme on page load
-    function initTheme() {
+    const initTheme = () => {
         const storedTheme = getStoredTheme();
         applyTheme(storedTheme);
-    }
+    };
 
-    // Set up theme toggle button
-    function setupThemeToggle() {
+    const setupThemeToggle = () => {
         const toggleButton = document.getElementById('theme-toggle');
         if (toggleButton) {
             toggleButton.addEventListener('click', toggleTheme);
         }
-    }
+    };
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             setupThemeToggle();
         });
