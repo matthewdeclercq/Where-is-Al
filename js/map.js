@@ -1,0 +1,134 @@
+// Map Management Module for Garmin InReach MapShare
+(function() {
+    'use strict';
+
+    // Map configuration
+    const MapConfig = {
+        // Set this to your Garmin MapShare URL when available
+        // Example: "https://share.garmin.com/AlTrail2024"
+        // Leave as null to show placeholder until MapShare is set up
+        mapShareUrl: null,
+        
+        // Auto-refresh interval in milliseconds (5 minutes)
+        refreshInterval: 300000,
+        
+        // Enable/disable automatic map refresh
+        enableAutoRefresh: true
+    };
+
+    let refreshIntervalId = null;
+    let mapContainer = null;
+
+    function initializeMap() {
+        mapContainer = document.querySelector('.map-container');
+        
+        if (!mapContainer) {
+            console.warn('Map container not found');
+            return;
+        }
+
+        if (!MapConfig.mapShareUrl) {
+            showPlaceholder();
+            return;
+        }
+
+        renderMap();
+        
+        if (MapConfig.enableAutoRefresh && MapConfig.refreshInterval > 0) {
+            setupAutoRefresh();
+        }
+    }
+
+    function renderMap() {
+        mapContainer.innerHTML = '';
+        
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'map-loading';
+        loadingDiv.innerHTML = '<p>Loading map...</p>';
+        mapContainer.appendChild(loadingDiv);
+
+        const iframe = document.createElement('iframe');
+        iframe.className = 'map-iframe';
+        iframe.src = MapConfig.mapShareUrl;
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('marginwidth', '0');
+        iframe.setAttribute('marginheight', '0');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('loading', 'lazy');
+        iframe.setAttribute('title', 'Garmin InReach MapShare');
+        
+        iframe.addEventListener('load', function() {
+            loadingDiv.remove();
+            mapContainer.appendChild(iframe);
+        });
+
+        iframe.addEventListener('error', function() {
+            handleMapError('Failed to load map. Please check your MapShare URL.');
+        });
+
+        setTimeout(function() {
+            if (loadingDiv.parentNode) {
+                loadingDiv.remove();
+                if (!mapContainer.querySelector('.map-iframe')) {
+                    mapContainer.appendChild(iframe);
+                }
+            }
+        }, 3000);
+    }
+
+    function showPlaceholder() {
+        mapContainer.innerHTML = `
+            <div class="map-placeholder">
+                <p>Map will appear here once Al's Garmin inReach MapShare link is connected!</p>
+                <p class="map-placeholder-subtitle">Check back soon for real-time trail updates.</p>
+            </div>
+        `;
+    }
+
+    function handleMapError(message) {
+        mapContainer.innerHTML = `
+            <div class="map-error">
+                <p>${message || 'Unable to load map at this time.'}</p>
+                <button class="map-retry-button" onclick="window.location.reload()">Retry</button>
+            </div>
+        `;
+    }
+
+    function refreshMap() {
+        const iframe = mapContainer ? mapContainer.querySelector('.map-iframe') : null;
+        if (iframe && MapConfig.mapShareUrl) {
+            const currentSrc = iframe.src;
+            iframe.src = '';
+            setTimeout(function() {
+                iframe.src = currentSrc;
+            }, 100);
+        }
+    }
+
+    function setupAutoRefresh() {
+        if (refreshIntervalId) {
+            clearInterval(refreshIntervalId);
+        }
+        
+        refreshIntervalId = setInterval(refreshMap, MapConfig.refreshInterval);
+    }
+
+    function cleanup() {
+        if (refreshIntervalId) {
+            clearInterval(refreshIntervalId);
+            refreshIntervalId = null;
+        }
+    }
+
+    // Initialize when DOM is ready
+    Utils.ready(initializeMap);
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+
+    // Export for manual use if needed
+    window.MapManager = {
+        refresh: refreshMap,
+        initialize: initializeMap
+    };
+})();

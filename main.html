@@ -4,22 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Follow Al's Appalachian Trail adventure in real-time">
+    <link rel="icon" type="image/png" href="assets/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="shortcut icon" href="assets/favicon.ico" />
     <title>Where Is Al - Appalachian Trail Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Theme toggle button - SVG icons duplicated in index.html for static site compatibility -->
-    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
-        </svg>
-        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z" clip-rule="evenodd"/>
-        </svg>
-    </button>
     <header class="site-header">
         <h1>Where is Al?</h1>
     </header>
@@ -29,13 +24,8 @@
         <section class="map-section" aria-label="Live trail map">
             <h2 class="section-title">Live Trail Map</h2>
             <div class="map-container">
-                <!-- Garmin MapShare or Explore embed will go here -->
-                <!-- Replace the placeholder below with your Garmin MapShare iframe or Explore embed URL -->
-                <!-- Example: <iframe src="YOUR_GARMIN_MAPSHARE_URL" width="100%" height="600" frameborder="0"></iframe> -->
-                <div class="map-placeholder">
-                    <p>Map will appear here once Al's Garmin inReach MapShare link is connected!</p>
-                    <p class="map-placeholder-subtitle">Check back soon for real-time trail updates.</p>
-                </div>
+                <!-- Map will be initialized by js/map.js -->
+                <!-- Set mapShareUrl in js/map.js to enable the Garmin MapShare map -->
             </div>
         </section>
 
@@ -44,32 +34,50 @@
             <h2 class="section-title">Trail Stats</h2>
             <div class="stats-grid">
                 <div class="stat-card">
+                    <i class="fas fa-route stat-icon"></i>
                     <h3 class="stat-label">Total Miles Completed</h3>
                     <p class="stat-value">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
+                    <i class="fas fa-flag-checkered stat-icon"></i>
                     <h3 class="stat-label">Miles Remaining</h3>
                     <p class="stat-value">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
+                    <i class="fas fa-walking stat-icon"></i>
                     <h3 class="stat-label">Daily Distance</h3>
                     <p class="stat-value">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
+                    <i class="fas fa-tachometer-alt stat-icon"></i>
                     <h3 class="stat-label">Average Speed</h3>
                     <p class="stat-value">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
+                    <i class="fas fa-calendar-day stat-icon"></i>
+                    <h3 class="stat-label">Current Day on Trail</h3>
+                    <p class="stat-value">—</p>
+                    <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-check stat-icon"></i>
+                    <h3 class="stat-label">Estimated Finish Date</h3>
+                    <p class="stat-value">—</p>
+                    <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-alt stat-icon"></i>
                     <h3 class="stat-label">Start Date</h3>
                     <p class="stat-value">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
-                    <h3 class="stat-label">Current Day on Trail</h3>
+                    <i class="fas fa-hamburger stat-icon"></i>
+                    <h3 class="stat-label">Cheeseburgers Consumed</h3>
                     <p class="stat-value">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
@@ -79,14 +87,23 @@
         <!-- Captain's Log Section -->
         <section class="log-section" aria-label="Captain's log dispatches">
             <h2 class="section-title">Captain's Log – Dispatches from the Trail</h2>
-            <div class="log-container">
-                <div class="log-placeholder">
-                    <p>Updates and photos will appear here once Al figures out the best way to beam them in from the woods!</p>
-                </div>
-                <!-- Future log entries will be added here in a grid/masonry layout -->
-                <div class="log-grid" id="log-grid">
-                    <!-- Log entries will be dynamically added here -->
-                </div>
+            <!-- Log entries will be added here in a grid/masonry layout -->
+            <div class="log-grid" id="log-grid">
+                <!-- Log entries will be dynamically added here -->
+            </div>
+        </section>
+
+        <!-- About the Appalachian Trail Section -->
+        <section class="about-section" aria-label="About the Appalachian Trail">
+            <h2 class="section-title">About the Appalachian Trail</h2>
+            <div class="about-content">
+                <p>The Appalachian Trail (AT) is one of the longest continuously marked footpaths in the world, stretching approximately 2,190 miles through 14 states from Springer Mountain in Georgia to Mount Katahdin in Maine.</p>
+                <p>Each year, thousands of hikers attempt to complete the entire trail, known as a "thru-hike." The journey typically takes 5-7 months and challenges hikers with diverse terrain, weather conditions, and the mental fortitude required for such an extended adventure.</p>
+                <p>Follow along as Al tackles this incredible journey, sharing stories, challenges, and triumphs from the trail!</p>
+                <figure class="about-image">
+                    <img src="assets/watermelon_al.jpg" alt="Al enjoying his watermelon water on the Appalachian Trail" loading="lazy">
+                    <figcaption>Al enjoying his watermelon water</figcaption>
+                </figure>
             </div>
         </section>
     </main>
@@ -95,8 +112,9 @@
         <p>Following Al's Appalachian Trail adventure</p>
     </footer>
 
-    <script src="js/theme.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/log-loader.js"></script>
+    <script src="js/map.js"></script>
 </body>
 </html>
 
