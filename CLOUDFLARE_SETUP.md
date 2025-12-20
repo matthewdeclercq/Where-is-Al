@@ -38,6 +38,12 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
 | `START_LAT` | `34.6269` | Starting latitude (Springer Mountain TH) |
 | `START_LON` | `-84.1939` | Starting longitude (Springer Mountain TH) |
 
+### Optional Variables (Plaintext)
+
+| Variable Name | Example Value | Description |
+|--------------|---------------|-------------|
+| `USE_MOCK_DATA` | `true` | Set to `'true'` to enable mock data mode for demos (no Garmin data required) |
+
 ### Optional Variables (Secrets)
 
 | Variable Name | Example Value | Description |
@@ -116,6 +122,24 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
 - **Check KML feed**: Visit `https://share.garmin.com/Feed/Share/YOUR_MAPSHARE_ID` to verify data exists
 - **Verify start date**: Points before the start date are filtered out
 - **Check date format**: Start date must be YYYY-MM-DD format
+
+## Using Mock Data for Demos
+
+If you want to demo the site before you have access to Garmin MapShare data, you can enable mock data mode:
+
+1. In your Worker dashboard, go to **Settings** > **Variables**
+2. Add a new environment variable:
+   - **Variable Name**: `USE_MOCK_DATA`
+   - **Value**: `true`
+   - Click **Save**
+3. The worker will now return realistic mock trail statistics and weather data
+4. Mock data includes:
+   - Trail progress (~15% complete, ~330 miles)
+   - Weather data for a location in Virginia on the AT
+   - 5-day weather forecast
+   - All stats calculated based on your `START_DATE`
+
+**Note**: When `USE_MOCK_DATA` is set to `'true'`, the worker will skip fetching Garmin KML data entirely and return mock data immediately. This is perfect for demos and development.
 
 ## Optional Enhancements
 

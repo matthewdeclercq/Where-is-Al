@@ -30,6 +30,46 @@
             </div>
         </section>
 
+        <!-- Weather Section -->
+        <section class="weather-section" aria-label="Weather at Al's location">
+            <h2 class="section-title">Weather at Al's Location</h2>
+            <div class="weather-container">
+                <div class="weather-card">
+                    <div id="weather-current" class="weather-current">
+                        <div class="weather-main">
+                            <div class="weather-icon">
+                                <i class="fas fa-cloud-sun"></i>
+                            </div>
+                            <div class="weather-temp-main">
+                                <span class="weather-temp">—</span>
+                                <div class="weather-condition">Loading weather...</div>
+                            </div>
+                        </div>
+                        <div class="weather-details">
+                            <div class="weather-detail-item">
+                                <i class="fas fa-thermometer-half"></i>
+                                <span class="weather-feels-like">—</span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <i class="fas fa-tint"></i>
+                                <span class="weather-humidity">—</span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <i class="fas fa-wind"></i>
+                                <span class="weather-wind">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="weather-forecast" class="weather-forecast">
+                        <!-- Forecast cards will be added here dynamically -->
+                    </div>
+                    <div class="weather-placeholder" style="display: none;">
+                        <p>Weather data will appear here once Al's location is available.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Stats Dashboard Section -->
         <section class="stats-section" aria-label="Hike statistics">
             <h2 class="section-title">Trail Stats</h2>
@@ -48,7 +88,7 @@
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-walking stat-icon"></i>
-                    <h3 class="stat-label">Daily Distance</h3>
+                    <h3 class="stat-label">Daily Distance (Last 24 Hours)</h3>
                     <p class="stat-value" id="daily-distance">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
@@ -117,6 +157,7 @@
     <script src="js/log-loader.js"></script>
     <script src="js/map.js"></script>
     <script src="js/stats.js"></script>
+    <script src="js/weather.js"></script>
 </body>
 </html>
 
