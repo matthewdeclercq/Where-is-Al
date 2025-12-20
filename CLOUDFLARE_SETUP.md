@@ -1,0 +1,159 @@
+# Cloudflare Worker Setup Guide
+
+This guide walks you through setting up a Cloudflare Worker to calculate and serve trail statistics based on Garmin MapShare KML data.
+
+## Prerequisites
+
+- A Cloudflare account (sign up at [dash.cloudflare.com](https://dash.cloudflare.com) - free tier includes 100,000 requests/day)
+- Your Garmin MapShare ID (from your Garmin Explore MapShare page)
+- Trail start date and location coordinates
+
+## Step 1: Create a Cloudflare Worker
+
+1. Log in to your Cloudflare dashboard at [dash.cloudflare.com](https://dash.cloudflare.com)
+2. Navigate to **Workers & Pages** > **Overview**
+3. Click **Create application** > **Workers**
+4. Name your worker (e.g., `at-trail-stats`)
+5. Click **Deploy** (we'll add the code in the next step)
+
+## Step 2: Add the Worker Code
+
+1. In your Worker dashboard, click **Edit code** or **Quick edit**
+2. Open the `worker.js` file from this repository
+3. Copy the entire contents of `worker.js`
+4. Paste it into the Cloudflare Workers editor, replacing the default code
+5. Click **Save and deploy**
+
+## Step 3: Configure Environment Variables
+
+1. In your Worker dashboard, go to **Settings** > **Variables**
+2. Add the following environment variables:
+
+### Required Variables (Plaintext)
+
+| Variable Name | Example Value | Description |
+|--------------|---------------|-------------|
+| `MAPSHARE_ID` | `AlHiker` | Your Garmin MapShare ID (from the MapShare URL) |
+| `START_DATE` | `2025-03-01` | Trail start date in YYYY-MM-DD format |
+| `START_LAT` | `34.6269` | Starting latitude (Springer Mountain TH) |
+| `START_LON` | `-84.1939` | Starting longitude (Springer Mountain TH) |
+
+### Optional Variables (Secrets)
+
+| Variable Name | Example Value | Description |
+|--------------|---------------|-------------|
+| `MAPSHARE_PASSWORD` | `your-password` | MapShare password if you've set one (click "Encrypt" when adding) |
+
+### How to Add Variables
+
+1. Under **Environment Variables**, click **Add variable**
+2. Enter the variable name (e.g., `MAPSHARE_ID`)
+3. Enter the value
+4. For passwords, click **Encrypt** to store as a secret
+5. Click **Save**
+
+## Step 4: Get Your Worker URL
+
+1. After deploying, your Worker will have a URL like:
+   ```
+   https://at-trail-stats.your-subdomain.workers.dev/
+   ```
+2. Copy this URL - you'll need it for the frontend configuration
+
+## Step 5: Update Frontend Configuration
+
+1. Open `js/stats.js` in your project
+2. Find the `StatsConfig` object at the top
+3. Update the `workerUrl` property with your Worker URL:
+   ```javascript
+   workerUrl: 'https://at-trail-stats.your-subdomain.workers.dev/',
+   ```
+4. Save the file
+
+## Step 6: Test the Worker
+
+1. Visit your Worker URL directly in a browser
+2. You should see JSON output with trail statistics, for example:
+   ```json
+   {
+     "startDate": "3/1/2025",
+     "totalMilesCompleted": "125.3",
+     "milesRemaining": "2072.6",
+     "dailyDistance": "8.5",
+     "averageSpeed": "2.1",
+     "currentDayOnTrail": 15,
+     "estimatedFinishDate": "9/15/2025"
+   }
+   ```
+3. If you see an error, check:
+   - Environment variables are set correctly
+   - MapShare ID is correct
+   - MapShare is publicly accessible (or password is correct)
+
+## Step 7: Test Frontend Integration
+
+1. Open your website (`main.html`)
+2. Check the browser console for any errors
+3. The stats should automatically load and update the stat cards
+4. Stats will refresh every hour automatically
+
+## Troubleshooting
+
+### Worker Returns 500 Error
+
+- **Check environment variables**: Ensure all required variables are set
+- **Verify MapShare ID**: Make sure the ID matches your Garmin MapShare URL
+- **Check MapShare access**: Ensure the MapShare is accessible (try the KML URL directly)
+
+### Stats Not Updating on Frontend
+
+- **Check Worker URL**: Verify `workerUrl` in `js/stats.js` matches your Worker URL
+- **Check browser console**: Look for CORS or fetch errors
+- **Verify CORS headers**: The Worker should include `Access-Control-Allow-Origin: *`
+
+### No Data Showing
+
+- **Check KML feed**: Visit `https://share.garmin.com/Feed/Share/YOUR_MAPSHARE_ID` to verify data exists
+- **Verify start date**: Points before the start date are filtered out
+- **Check date format**: Start date must be YYYY-MM-DD format
+
+## Optional Enhancements
+
+### Custom Domain
+
+1. In Worker settings, go to **Triggers** > **Custom Domains**
+2. Add your custom domain
+3. Update DNS records as instructed
+
+### Caching
+
+To reduce load on Garmin's servers, you can add caching:
+
+1. In Cloudflare dashboard, go to **Rules** > **Cache Rules**
+2. Create a rule to cache Worker responses for 5-10 minutes
+3. This reduces API calls while keeping stats reasonably fresh
+
+### Monitoring
+
+1. Use **Workers & Pages** > **Analytics** to monitor:
+   - Request count
+   - Error rate
+   - Response times
+2. Set up alerts for high error rates
+
+## Security Notes
+
+- **CORS**: The Worker currently allows all origins (`*`). For production, consider restricting to your domain:
+  ```javascript
+  'Access-Control-Allow-Origin': 'https://yourdomain.com'
+  ```
+- **Secrets**: Always store passwords as encrypted secrets, not plaintext variables
+- **Rate Limiting**: Cloudflare Workers free tier includes rate limiting automatically
+
+## Support
+
+If you encounter issues:
+1. Check Cloudflare Workers logs in the dashboard
+2. Verify your Garmin MapShare is accessible
+3. Test the Worker URL directly to see error messages
+4. Review browser console for frontend errors
