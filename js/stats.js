@@ -4,7 +4,7 @@
 
     // Configuration
     const StatsConfig = {
-        workerUrl: 'where-is-al.matthew-declercq.workers.dev',
+        workerUrl: 'https://where-is-al.matthew-declercq.workers.dev/',
         
         // Refresh interval in milliseconds (default: 1 hour)
         refreshInterval: 3600000,

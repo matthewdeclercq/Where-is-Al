@@ -103,7 +103,15 @@ function calculateStats(points, startDateStr, totalTrailMiles) {
 
   const startDate = new Date(startDateStr + 'T00:00:00Z');
   const now = new Date();
-  const currentDay = Math.floor((now - startDate) / (86400000)) + 1;
+  
+  // Calculate current day on trail based on calendar days
+  // Get today at midnight UTC for consistent day calculation
+  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const startDateUTC = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+  
+  // Calculate difference in days and add 1 (so start date is day 1)
+  const daysDiff = Math.floor((todayUTC - startDateUTC) / (86400000));
+  const currentDay = daysDiff + 1;
 
   let totalMiles = 0;
   let movingTimeHours = 0;
