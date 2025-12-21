@@ -175,6 +175,22 @@
     </footer>
 
     <script src="js/utils.js"></script>
+    <!-- Auth check - must be first to protect the page -->
+    <script>
+        // Check authentication before loading page content
+        (function() {
+            'use strict';
+            const token = sessionStorage.getItem('auth_token');
+            const expires = sessionStorage.getItem('auth_expires');
+            
+            if (!token || !expires || Date.now() >= parseInt(expires)) {
+                // Not authenticated or token expired, redirect to password page
+                sessionStorage.removeItem('auth_token');
+                sessionStorage.removeItem('auth_expires');
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
     <script src="js/log-loader.js"></script>
     <script src="js/map.js"></script>
     <script src="js/stats.js"></script>

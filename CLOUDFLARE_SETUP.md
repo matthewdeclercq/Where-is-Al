@@ -37,6 +37,7 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
 | `START_DATE` | `2025-03-01` | Trail start date in YYYY-MM-DD format |
 | `START_LAT` | `34.6269` | Starting latitude (Springer Mountain TH) |
 | `START_LON` | `-84.1939` | Starting longitude (Springer Mountain TH) |
+| `SITE_PASSWORD` | `buffalo` | Password for accessing the site (stored securely on server) |
 
 ### Optional Variables (Plaintext)
 
@@ -49,6 +50,7 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
 | Variable Name | Example Value | Description |
 |--------------|---------------|-------------|
 | `MAPSHARE_PASSWORD` | `your-password` | MapShare password if you've set one (click "Encrypt" when adding) |
+| `SITE_PASSWORD` | `your-password` | **Recommended**: Store site password as encrypted secret for better security (click "Encrypt" when adding) |
 
 ### How to Add Variables
 
@@ -74,7 +76,17 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
    ```javascript
    workerUrl: 'https://at-trail-stats.your-subdomain.workers.dev/',
    ```
-4. Save the file
+4. The password authentication is already configured to use the same worker URL
+5. Save the file
+
+### Password Authentication
+
+The site uses server-side password validation for security:
+- Password is stored in Cloudflare Worker environment variables (never in client code)
+- Authentication tokens are generated server-side and stored in sessionStorage
+- Tokens expire after 24 hours
+- Rate limiting: 5 attempts max, then 15-minute lockout
+- Main page is protected and redirects to password page if not authenticated
 
 ## Step 6: Test the Worker
 

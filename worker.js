@@ -69,14 +69,110 @@ function getMockData(startDateStr) {
 
 export default {
   async fetch(request, env, ctx) {
-    // Config from env
-    const MAPSHARE_ID = env.MAPSHARE_ID;
-    const MAPSHARE_PASSWORD = env.MAPSHARE_PASSWORD || '';
-    const START_DATE_STR = env.START_DATE;
-    const START_LAT = parseFloat(env.START_LAT);
-    const START_LON = parseFloat(env.START_LON);
-    const TOTAL_TRAIL_MILES = 2197.9;
-    const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
+    const url = new URL(request.url);
+    
+    // Handle CORS preflight requests
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Max-Age': '86400'
+        }
+      });
+    }
+    
+    // Handle authentication endpoint
+    if (url.pathname === '/auth' && request.method === 'POST') {
+      return handleAuth(request, env);
+    }
+    
+    // Handle stats endpoint (default)
+    return handleStats(request, env);
+  },
+};
+
+// Authentication handler
+async function handleAuth(request, env) {
+  try {
+    const { password } = await request.json();
+    const CORRECT_PASSWORD = env.SITE_PASSWORD;
+    
+    if (!CORRECT_PASSWORD) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Authentication not configured' 
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type'
+        }
+      });
+    }
+    
+    if (password.toLowerCase() === CORRECT_PASSWORD) {
+      // Generate a session token
+      const token = crypto.randomUUID();
+      const expiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        token: token,
+        expires: expiry 
+      }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Cache-Control': 'no-cache'
+        }
+      });
+    }
+    
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: 'Invalid password'
+    }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Cache-Control': 'no-cache'
+      }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: 'Invalid request format'
+    }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
+    });
+  }
+}
+
+// Stats handler (existing functionality)
+async function handleStats(request, env) {
+  // Config from env
+  const MAPSHARE_ID = env.MAPSHARE_ID;
+  const MAPSHARE_PASSWORD = env.MAPSHARE_PASSWORD || '';
+  const START_DATE_STR = env.START_DATE;
+  const START_LAT = parseFloat(env.START_LAT);
+  const START_LON = parseFloat(env.START_LON);
+  const TOTAL_TRAIL_MILES = 2197.9;
+  const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
 
     // If mock mode is enabled, return mock data immediately
     if (USE_MOCK_DATA) {
@@ -150,8 +246,7 @@ export default {
         }
       });
     }
-  },
-};
+}
 
 // Lightweight KML parser for Garmin format
 function parseKmlPoints(kmlText, startDate) {
