@@ -84,7 +84,8 @@ export default {
       return new Response(JSON.stringify(mockData), {
         headers: { 
           'Content-Type': 'application/json', 
-          'Access-Control-Allow-Origin': '*' 
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
         },
       });
     }
@@ -130,11 +131,13 @@ export default {
         weather: weather
       };
 
-      // Return JSON
+      // Return JSON with cache headers
+      // Cache for 5 minutes - trail data doesn't change that frequently
       return new Response(JSON.stringify(response), {
         headers: { 
           'Content-Type': 'application/json', 
-          'Access-Control-Allow-Origin': '*' 
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=300' // Cache for 5 minutes
         },
       });
     } catch (error) {
@@ -142,7 +145,8 @@ export default {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache' // Don't cache errors
         }
       });
     }

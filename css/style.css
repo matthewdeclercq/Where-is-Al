@@ -75,6 +75,7 @@
 html {
     font-size: 16px;
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
@@ -95,6 +96,10 @@ body {
         linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     background-attachment: fixed;
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 
@@ -184,7 +189,7 @@ p {
 
 /* Password Page Styles */
 .password-page {
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -197,7 +202,12 @@ p {
     background-repeat: no-repeat;
     background-attachment: fixed;
     padding: 1rem;
+    padding-top: calc(1rem + env(safe-area-inset-top));
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    padding-left: calc(1rem + env(safe-area-inset-left));
+    padding-right: calc(1rem + env(safe-area-inset-right));
     position: relative;
+    overflow: hidden;
 }
 
 
@@ -323,6 +333,12 @@ p {
     align-items: center;
     justify-content: center;
     min-width: 60px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .password-button svg {
@@ -348,6 +364,12 @@ p {
     overflow: hidden;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.3);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .password-button::before {
@@ -456,6 +478,9 @@ p {
     background-repeat: no-repeat;
     color: var(--white);
     padding: 2rem 1rem;
+    padding-top: calc(2rem + env(safe-area-inset-top));
+    padding-left: calc(1rem + env(safe-area-inset-left));
+    padding-right: calc(1rem + env(safe-area-inset-right));
     text-align: center;
     box-shadow: 
         0 4px 12px var(--shadow-color-heavy),
@@ -1043,6 +1068,9 @@ main > p:first-of-type {
     color: var(--white);
     text-align: center;
     padding: 2rem 1rem;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+    padding-left: calc(1rem + env(safe-area-inset-left));
+    padding-right: calc(1rem + env(safe-area-inset-right));
     margin-top: 4rem;
     position: relative;
     overflow: hidden;
@@ -1095,6 +1123,19 @@ main > p:first-of-type {
 
     .password-input {
         max-width: 100%;
+        font-size: 16px;
+    }
+
+    .password-page {
+        background-attachment: scroll;
+    }
+
+    .password-button {
+        min-height: 44px;
+    }
+
+    .map-retry-button {
+        min-height: 44px;
     }
 
     .stats-grid {
@@ -1136,7 +1177,7 @@ main > p:first-of-type {
 
     .password-input {
         max-width: 100%;
-        font-size: 0.9rem;
+        font-size: 16px;
         padding: 0.875rem 1rem;
         padding-right: 3rem;
     }
@@ -1267,6 +1308,18 @@ main > p:first-of-type {
 /* Password page theme toggle positioning */
 .password-page {
     position: relative;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 

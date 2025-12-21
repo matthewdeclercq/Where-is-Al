@@ -9,8 +9,8 @@
         // Leave as null to show placeholder until MapShare is set up
         mapShareUrl: null,
         
-        // Auto-refresh interval in milliseconds (5 minutes)
-        refreshInterval: 300000,
+        // Auto-refresh interval in milliseconds (30 minutes - trail location changes slowly)
+        refreshInterval: 1800000,
         
         // Enable/disable automatic map refresh
         enableAutoRefresh: true
@@ -18,6 +18,7 @@
 
     let refreshIntervalId = null;
     let mapContainer = null;
+    let isPageVisible = true;
 
     function initializeMap() {
         mapContainer = document.querySelector('.map-container');
@@ -110,7 +111,29 @@
             clearInterval(refreshIntervalId);
         }
         
-        refreshIntervalId = setInterval(refreshMap, MapConfig.refreshInterval);
+        // Only set up interval if page is visible
+        if (isPageVisible && MapConfig.enableAutoRefresh && MapConfig.refreshInterval > 0) {
+            refreshIntervalId = setInterval(refreshMap, MapConfig.refreshInterval);
+        }
+    }
+
+    function handleVisibilityChange() {
+        isPageVisible = !document.hidden;
+        
+        if (isPageVisible) {
+            // Page became visible - resume polling
+            setupAutoRefresh();
+            // Refresh immediately when page becomes visible
+            if (mapContainer && MapConfig.mapShareUrl) {
+                refreshMap();
+            }
+        } else {
+            // Page became hidden - pause polling
+            if (refreshIntervalId) {
+                clearInterval(refreshIntervalId);
+                refreshIntervalId = null;
+            }
+        }
     }
 
     function cleanup() {
@@ -118,10 +141,14 @@
             clearInterval(refreshIntervalId);
             refreshIntervalId = null;
         }
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
 
     // Initialize when DOM is ready
     Utils.ready(initializeMap);
+
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);

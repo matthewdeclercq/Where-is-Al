@@ -15,6 +15,10 @@
 
     let refreshIntervalId = null;
     let isLoading = false;
+    let isPageVisible = true;
+    let errorCount = 0;
+    let backoffDelay = 0;
+    const MAX_BACKOFF_DELAY = 300000; // 5 minutes max backoff
 
     // Stat element IDs mapping
     const statElements = {
@@ -91,9 +95,19 @@
             return; // Prevent concurrent requests
         }
 
+        // Don't fetch if page is hidden
+        if (!isPageVisible) {
+            return;
+        }
+
         if (!StatsConfig.workerUrl || StatsConfig.workerUrl.includes('your-worker')) {
             console.warn('Cloudflare Worker URL not configured. Update StatsConfig.workerUrl in js/stats.js');
             return;
+        }
+
+        // Apply exponential backoff if there were recent errors
+        if (backoffDelay > 0) {
+            await new Promise(resolve => setTimeout(resolve, backoffDelay));
         }
 
         isLoading = true;
@@ -117,10 +131,18 @@
                 throw new Error(stats.error);
             }
 
+            // Success - reset error count and backoff
+            errorCount = 0;
+            backoffDelay = 0;
+
             // Update the display
             updateStatsDisplay(stats);
             
         } catch (error) {
+            errorCount++;
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s (max 5 min)
+            backoffDelay = Math.min(Math.pow(2, errorCount - 1) * 1000, MAX_BACKOFF_DELAY);
+            console.warn(`Stats fetch failed (attempt ${errorCount}), retrying in ${backoffDelay}ms:`, error.message);
             showStatsError(error.message);
         } finally {
             isLoading = false;
@@ -135,8 +157,32 @@
             clearInterval(refreshIntervalId);
         }
 
-        if (StatsConfig.enableAutoRefresh && StatsConfig.refreshInterval > 0) {
+        // Only set up interval if page is visible
+        if (isPageVisible && StatsConfig.enableAutoRefresh && StatsConfig.refreshInterval > 0) {
             refreshIntervalId = setInterval(fetchStats, StatsConfig.refreshInterval);
+        }
+    }
+
+    /**
+     * Handle page visibility changes
+     */
+    function handleVisibilityChange() {
+        isPageVisible = !document.hidden;
+        
+        if (isPageVisible) {
+            // Page became visible - resume polling
+            setupAutoRefresh();
+            // Reset error count and backoff when page becomes visible
+            errorCount = 0;
+            backoffDelay = 0;
+            // Fetch immediately when page becomes visible
+            fetchStats();
+        } else {
+            // Page became hidden - pause polling
+            if (refreshIntervalId) {
+                clearInterval(refreshIntervalId);
+                refreshIntervalId = null;
+            }
         }
     }
 
@@ -161,10 +207,14 @@
             clearInterval(refreshIntervalId);
             refreshIntervalId = null;
         }
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
 
     // Initialize when DOM is ready
     Utils.ready(initializeStats);
+
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);
