@@ -37,7 +37,7 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
 | `START_DATE` | `2025-03-01` | Trail start date in YYYY-MM-DD format |
 | `START_LAT` | `34.6269` | Starting latitude (Springer Mountain TH) |
 | `START_LON` | `-84.1939` | Starting longitude (Springer Mountain TH) |
-| `SITE_PASSWORD` | `buffalo` | Password for accessing the site (stored securely on server) |
+| `SITE_PASSWORD` | `your-password` | Password for accessing the site (stored securely on server) |
 
 ### Optional Variables (Plaintext)
 
