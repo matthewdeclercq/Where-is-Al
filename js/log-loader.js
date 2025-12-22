@@ -64,17 +64,11 @@
             });
             
             const results = await Promise.all(loadPromises);
-            // Sort results by filename (newest first) to ensure correct display order
-            // This handles any edge cases where order might not be preserved
-            const sortedResults = results
-                .filter(result => result.html !== null)
-                .sort((a, b) => {
-                    // Sort by filename descending (newest first)
-                    return b.filename.localeCompare(a.filename);
-                });
+            // Filter out failed loads and insert in order (Promise.all preserves order)
+            const validResults = results.filter(result => result.html !== null);
             
-            // Insert in sorted order
-            for (const { html } of sortedResults) {
+            // Insert in sorted order (already sorted by filename from sortedFilenames)
+            for (const { html } of validResults) {
                 logGrid.insertAdjacentHTML('beforeend', html);
             }
         } catch (error) {

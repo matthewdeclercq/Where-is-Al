@@ -3,13 +3,16 @@
     'use strict';
 
     // Configuration
+    // Utils is loaded before this script, so getConfig should always be available
+    const getConfigValue = (path, defaultValue) => {
+        return (typeof Utils !== 'undefined' && Utils.getConfig) 
+            ? Utils.getConfig(path, defaultValue)
+            : defaultValue;
+    };
+    
     const StatsConfig = {
-        workerUrl: (typeof Utils !== 'undefined' && Utils.getConfig) 
-            ? Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/')
-            : 'https://where-is-al.matthew-declercq.workers.dev/',
-        refreshInterval: (typeof Utils !== 'undefined' && Utils.getConfig) 
-            ? Utils.getConfig('refreshIntervals.stats', 3600000)
-            : 3600000,
+        workerUrl: getConfigValue('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
+        refreshInterval: getConfigValue('refreshIntervals.stats', 3600000),
         enableAutoRefresh: true
     };
 
@@ -30,11 +33,33 @@
         'currentDayOnTrail': 'current-day',
         'estimatedFinishDate': 'est-finish',
         'startDate': 'start-date',
-        'longestDayMiles': 'longest-day-miles'
+        'longestDayMiles': 'longest-day-miles',
+        'mostElevationGainFeet': 'most-elevation-gain-feet'
     };
 
     // Store stats globally for use in updateStatElement
     let currentStats = null;
+
+    /**
+     * Format stat value with optional date suffix
+     * @param {string} key - Stat key
+     * @param {string} value - Stat value
+     * @param {Object} stats - Stats object containing date fields
+     * @returns {string} Formatted stat value
+     */
+    function formatStatWithDate(key, value, stats) {
+        // Map of stat keys to their date field and unit
+        const dateFormatMap = {
+            'longestDayMiles': { dateField: 'longestDayDate', unit: 'mi' },
+            'mostElevationGainFeet': { dateField: 'mostElevationGainDate', unit: 'ft' }
+        };
+        
+        const format = dateFormatMap[key];
+        if (format && stats && stats[format.dateField]) {
+            return `${value} ${format.unit} (${stats[format.dateField]})`;
+        }
+        return value;
+    }
 
     /**
      * Update a single stat value in the DOM
@@ -45,12 +70,8 @@
 
         const element = document.getElementById(elementId);
         if (element) {
-            // Special formatting for longest day (show miles and date)
-            if (key === 'longestDayMiles' && currentStats && currentStats.longestDayDate) {
-                element.textContent = `${value} mi (${currentStats.longestDayDate})`;
-            } else {
-                element.textContent = value;
-            }
+            // Format value with date if applicable
+            element.textContent = formatStatWithDate(key, value, currentStats);
             
             // Hide placeholder text in the same stat card
             const statCard = element.closest('.stat-card');
@@ -185,11 +206,4 @@
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);
-
-    // Export for manual use if needed
-    window.StatsManager = {
-        refresh: fetchStats,
-        initialize: initializeStats,
-        config: StatsConfig
-    };
 })();

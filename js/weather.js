@@ -3,13 +3,16 @@
     'use strict';
 
     // Configuration
+    // Utils is loaded before this script, so getConfig should always be available
+    const getConfigValue = (path, defaultValue) => {
+        return (typeof Utils !== 'undefined' && Utils.getConfig) 
+            ? Utils.getConfig(path, defaultValue)
+            : defaultValue;
+    };
+    
     const WeatherConfig = {
-        workerUrl: (typeof Utils !== 'undefined' && Utils.getConfig) 
-            ? Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/')
-            : 'https://where-is-al.matthew-declercq.workers.dev/',
-        refreshInterval: (typeof Utils !== 'undefined' && Utils.getConfig) 
-            ? Utils.getConfig('refreshIntervals.weather', 3600000)
-            : 3600000,
+        workerUrl: getConfigValue('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
+        refreshInterval: getConfigValue('refreshIntervals.weather', 3600000),
         enableAutoRefresh: true
     };
 
@@ -21,7 +24,6 @@
         backoffDelay: 0
     };
     let weatherChart = null; // Chart.js instance
-    let resizeTimeoutId = null; // For debouncing resize events
 
     /**
      * Get weather icon class based on condition
@@ -55,14 +57,19 @@
     }
 
     /**
-     * Format date for display
+     * Format date for display (uses shared DateUtils)
+     * DateUtils is loaded before this script, so it should always be available
      */
     function formatDate(dateString) {
+        // DateUtils is loaded before this script, but keep fallback for safety
+        if (window.DateUtils && window.DateUtils.formatDate) {
+            return window.DateUtils.formatDate(dateString, false); // Use local time for weather
+        }
+        // Fallback if DateUtils not available (shouldn't happen in production)
         const date = new Date(dateString);
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
         if (date.toDateString() === today.toDateString()) {
             return 'Today';
         } else if (date.toDateString() === tomorrow.toDateString()) {
@@ -114,12 +121,19 @@
 
     /**
      * Create point styling arrays based on labels (highlight "Today")
+     * Uses shared ChartUtils if available
      */
     function createPointStyling(labels, baseRadius, todayRadius) {
+        if (typeof ChartUtils !== 'undefined' && ChartUtils.createPointStyling) {
+            return ChartUtils.createPointStyling(labels, 'Today', baseRadius, todayRadius);
+        }
         return labels.map(label => label === 'Today' ? todayRadius : baseRadius);
     }
 
     function createPointBorderStyling(labels, baseBorder, todayBorder) {
+        if (typeof ChartUtils !== 'undefined' && ChartUtils.createPointBorderStyling) {
+            return ChartUtils.createPointBorderStyling(labels, 'Today', baseBorder, todayBorder);
+        }
         return labels.map(label => label === 'Today' ? todayBorder : baseBorder);
     }
 
@@ -145,13 +159,32 @@
     }
 
     /**
-     * Create chart options configuration
+     * Create chart options configuration (uses shared ChartUtils)
      */
     function createChartOptions(labels, yAxisMin, yAxisMax) {
-        // Use different aspect ratio for mobile devices
+        if (typeof ChartUtils !== 'undefined' && ChartUtils.createBaseChartOptions) {
+            return ChartUtils.createBaseChartOptions({
+                aspectRatio: 3.2,
+                aspectRatioMobile: 1.8,
+                showLegend: true,
+                tooltipLabelCallback: function(context) {
+                    return `${context.dataset.label}: ${context.parsed.y}°F`;
+                },
+                labels: labels,
+                yAxisMin: yAxisMin,
+                yAxisMax: yAxisMax,
+                yAxisCallback: function(value) {
+                    return value + '°F';
+                },
+                xAxisOptions: {
+                    showGrid: false
+                }
+            });
+        }
+        
+        // Fallback if ChartUtils not available
         const isMobile = (typeof Utils !== 'undefined' && Utils.isMobile) ? Utils.isMobile() : window.innerWidth <= 480;
-        const aspectRatio = isMobile ? 1.8 : 3.2; // More square on mobile for better vertical space
-
+        const aspectRatio = isMobile ? 1.8 : 3.2;
         return {
             responsive: true,
             maintainAspectRatio: true,
@@ -163,27 +196,16 @@
                     onClick: null,
                     labels: {
                         usePointStyle: true,
-                        padding: isMobile ? 10 : 15, // Less padding on mobile
-                        font: {
-                            family: "'Cabin', sans-serif",
-                            size: isMobile ? 12 : 14, // Smaller font on mobile
-                            weight: 600
-                        },
+                        padding: isMobile ? 10 : 15,
+                        font: { family: "'Cabin', sans-serif", size: isMobile ? 12 : 14, weight: 600 },
                         color: 'var(--text-dark)'
                     }
                 },
                 tooltip: {
                     backgroundColor: 'rgba(30, 58, 15, 0.9)',
                     padding: 12,
-                    titleFont: {
-                        family: "'Cabin', sans-serif",
-                        size: 14,
-                        weight: 600
-                    },
-                    bodyFont: {
-                        family: "'Cabin', sans-serif",
-                        size: 13
-                    },
+                    titleFont: { family: "'Cabin', sans-serif", size: 14, weight: 600 },
+                    bodyFont: { family: "'Cabin', sans-serif", size: 13 },
                     borderColor: 'var(--earth-brown)',
                     borderWidth: 2,
                     callbacks: {
@@ -196,47 +218,32 @@
             scales: {
                 x: {
                     grid: { display: false },
-                        ticks: {
-                            font: function(context) {
-                                const label = labels[context.index];
-                                return {
-                                    family: "'Cabin', sans-serif",
-                                    size: isMobile ? 10 : 12, // Smaller font on mobile
-                                    weight: label === 'Today' ? 700 : 600
-                                };
-                            },
-                            color: function(context) {
-                                const label = labels[context.index];
-                                return label === 'Today' ? '#1e3a0f' : 'var(--earth-brown-dark)';
-                            },
-                            padding: isMobile ? 5 : 10 // Less padding on mobile
-                        }
+                    ticks: {
+                        font: function(context) {
+                            const label = labels[context.index];
+                            return { family: "'Cabin', sans-serif", size: isMobile ? 10 : 12, weight: label === 'Today' ? 700 : 600 };
+                        },
+                        color: function(context) {
+                            const label = labels[context.index];
+                            return label === 'Today' ? '#1e3a0f' : 'var(--earth-brown-dark)';
+                        },
+                        padding: isMobile ? 5 : 10
+                    }
                 },
                 y: {
                     beginAtZero: false,
                     min: yAxisMin,
                     max: yAxisMax,
-                    grid: {
-                        color: 'rgba(139, 111, 71, 0.2)',
-                        lineWidth: 1
-                    },
-                        ticks: {
-                            font: {
-                                family: "'Cabin', sans-serif",
-                                size: isMobile ? 10 : 12 // Smaller font on mobile
-                            },
-                            color: 'var(--text-dark)',
-                            callback: function(value) {
-                                return value + '°F';
-                            },
-                            padding: isMobile ? 5 : 10 // Less padding on mobile
-                        }
+                    grid: { color: 'rgba(139, 111, 71, 0.2)', lineWidth: 1 },
+                    ticks: {
+                        font: { family: "'Cabin', sans-serif", size: isMobile ? 10 : 12 },
+                        color: 'var(--text-dark)',
+                        callback: function(value) { return value + '°F'; },
+                        padding: isMobile ? 5 : 10
+                    }
                 }
             },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            }
+            interaction: { intersect: false, mode: 'index' }
         };
     }
 
@@ -530,13 +537,12 @@
                 { method: 'GET' },
                 {
                     onSuccess: (data) => {
-                        if (data && data.weather === null) {
-                            showWeatherPlaceholder('Weather data will appear here once Al\'s location is available.');
-                            return;
-                        }
-                        
                         if (!data || !data.weather) {
-                            showWeatherPlaceholder('Weather data temporarily unavailable.');
+                            if (!data || data.weather === null) {
+                                showWeatherPlaceholder('Weather data will appear here once Al\'s location is available.');
+                            } else {
+                                showWeatherPlaceholder('Weather data temporarily unavailable.');
+                            }
                             return;
                         }
                         
@@ -608,18 +614,21 @@
     /**
      * Handle window resize with debouncing
      */
-    function handleResize() {
-        // Clear existing timeout
-        if (resizeTimeoutId) {
-            clearTimeout(resizeTimeoutId);
-        }
-
-        // Debounce resize events (wait 150ms after last resize)
-        resizeTimeoutId = setTimeout(function() {
-            updateChartForScreenSize();
-            resizeTimeoutId = null;
-        }, 150);
-    }
+    const handleResize = (typeof Utils !== 'undefined' && Utils.debounce)
+        ? Utils.debounce(updateChartForScreenSize, 200)
+        : (function() {
+            // Fallback debounce implementation
+            let resizeTimeoutId = null;
+            return function() {
+                if (resizeTimeoutId) {
+                    clearTimeout(resizeTimeoutId);
+                }
+                resizeTimeoutId = setTimeout(function() {
+                    updateChartForScreenSize();
+                    resizeTimeoutId = null;
+                }, 200);
+            };
+        })();
 
     /**
      * Register resize handler
@@ -633,10 +642,6 @@
      */
     function unregisterResizeHandler() {
         window.removeEventListener('resize', handleResize);
-        if (resizeTimeoutId) {
-            clearTimeout(resizeTimeoutId);
-            resizeTimeoutId = null;
-        }
     }
 
     /**
@@ -730,12 +735,5 @@
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);
-
-    // Export for manual use if needed
-    window.WeatherManager = {
-        refresh: fetchWeather,
-        initialize: initializeWeather,
-        config: WeatherConfig
-    };
 })();
 

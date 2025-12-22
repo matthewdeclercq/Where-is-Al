@@ -3,29 +3,6 @@
     'use strict';
 
     /**
-     * Storage utilities with error handling
-     */
-    const Storage = {
-        get: function(key, defaultValue = null) {
-            try {
-                const item = localStorage.getItem(key);
-                return item !== null ? item : defaultValue;
-            } catch {
-                return defaultValue;
-            }
-        },
-
-        set: function(key, value) {
-            try {
-                localStorage.setItem(key, value.toString());
-                return true;
-            } catch {
-                return false;
-            }
-        }
-    };
-
-    /**
      * Execute callback when DOM is ready
      */
     function ready(callback) {
@@ -64,6 +41,24 @@
      */
     function isMobile() {
         return window.innerWidth <= 480;
+    }
+
+    /**
+     * Create a debounced function that delays execution until after wait time has passed
+     * @param {Function} func - Function to debounce
+     * @param {number} wait - Wait time in milliseconds (default: 200)
+     * @returns {Function} Debounced function
+     */
+    function debounce(func, wait = 200) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
     /**
@@ -114,10 +109,10 @@
 
     // Export utilities to global scope
     window.Utils = {
-        Storage: Storage,
         ready: ready,
         getConfig: getConfig,
         VisibilityManager: VisibilityManager,
-        isMobile: isMobile
+        isMobile: isMobile,
+        debounce: debounce
     };
 })();

@@ -10,6 +10,7 @@
         mapShareUrl: null,
         
         // Auto-refresh interval in milliseconds (30 minutes - trail location changes slowly)
+        // Utils is loaded before this script, so getConfig should always be available
         refreshInterval: (typeof Utils !== 'undefined' && Utils.getConfig) 
             ? Utils.getConfig('refreshIntervals.map', 1800000)
             : 1800000,
@@ -173,10 +174,4 @@
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);
-
-    // Export for manual use if needed
-    window.MapManager = {
-        refresh: refreshMap,
-        initialize: initializeMap
-    };
 })();

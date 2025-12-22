@@ -2,6 +2,10 @@
 
 // Constants
 const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MS_PER_DAY = 24 * 60 * 60 * 1000; // Milliseconds per day (86400000)
+const MOVING_VELOCITY_THRESHOLD_MPH = 1; // Minimum velocity (mph) to count as moving
+const MIN_DAY_ON_TRAIL = 1; // Minimum day number (start date is day 1)
+
 // Trail correction factor to account for trail winding
 // Research suggests AT has fractal dimension ~1.08, meaning actual trail
 // distance is typically 8-15% longer than straight-line distance
@@ -14,6 +18,14 @@ const ALLOWED_ORIGINS = [
   'http://localhost:8000',
   'http://127.0.0.1:3000',
 ];
+
+// Helper function to get UTC date string (YYYY-MM-DD) from Date object or ISO string
+// Caches the conversion to avoid repeated string operations
+function getUTCDateString(dateOrTime) {
+  if (!dateOrTime) return null;
+  const date = dateOrTime instanceof Date ? dateOrTime : new Date(dateOrTime);
+  return date.toISOString().split('T')[0];
+}
 
 // Helper function to get CORS origin from request
 function getCorsOrigin(request) {
@@ -74,7 +86,12 @@ function decodeToken(token) {
   }
 }
 
-// Validate authentication token
+/**
+ * Validate authentication token
+ * @param {string} token - Authentication token to validate
+ * @param {Object} env - Environment variables object
+ * @returns {Promise<boolean>} True if token is valid, false otherwise
+ */
 async function validateToken(token, env) {
   if (!token) {
     return false;
@@ -105,9 +122,26 @@ async function validateToken(token, env) {
     
     return Date.now() < decoded.expires;
   } catch (error) {
-    console.error('Token validation error:', error);
+    console.error('[Worker] Token validation error:', error);
     return false;
   }
+}
+
+/**
+ * Authentication middleware - extracts and validates token from request
+ * @param {Request} request - Fetch request object
+ * @param {Object} env - Environment variables object
+ * @returns {Promise<Response|null>} Error response if auth fails, null if auth succeeds
+ */
+async function requireAuth(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader ? authHeader.replace('Bearer ', '') : null;
+  
+  if (!token || !(await validateToken(token, env))) {
+    return createErrorResponse(401, 'Unauthorized - Invalid or missing token', request);
+  }
+  
+  return null; // Auth passed, return null to indicate success
 }
 
 // Store authentication token
@@ -121,7 +155,7 @@ async function storeToken(token, expires, env) {
         { expirationTtl: Math.floor((expires - Date.now()) / 1000) }
       );
     } catch (error) {
-      console.error('Failed to store token in KV:', error);
+      console.error('[Worker] Failed to store token in KV:', error);
     }
   }
 }
@@ -135,14 +169,55 @@ function buildKmlUrl(mapshareId, password) {
   return kmlUrl;
 }
 
+// Helper function to generate mock weather data
+function generateMockWeather(todayUTC) {
+  const getDateString = (daysOffset) => {
+    const date = new Date(todayUTC);
+    date.setUTCDate(date.getUTCDate() + daysOffset);
+    return getUTCDateString(date);
+  };
+  
+  return {
+    current: {
+      temperature: 68,
+      condition: 'Partly cloudy',
+      humidity: 65,
+      windSpeed: 7,
+      windDirection: 180,
+      feelsLike: 70
+    },
+    forecast: [
+      { date: getDateString(0), high: 72, low: 58, condition: 'Partly cloudy' },
+      { date: getDateString(1), high: 75, low: 60, condition: 'Sunny' },
+      { date: getDateString(2), high: 70, low: 55, condition: 'Partly cloudy' },
+      { date: getDateString(3), high: 68, low: 52, condition: 'Light rain' },
+      { date: getDateString(4), high: 65, low: 50, condition: 'Partly cloudy' }
+    ]
+  };
+}
+
+// Helper function to generate mock record dates
+function generateMockRecordDates(todayUTC) {
+  const longestDayDate = new Date(todayUTC);
+  longestDayDate.setUTCDate(longestDayDate.getUTCDate() - 5); // 5 days ago
+  
+  const mostElevationGainDate = new Date(todayUTC);
+  mostElevationGainDate.setUTCDate(mostElevationGainDate.getUTCDate() - 3); // 3 days ago
+  
+  return {
+    longestDayDate: longestDayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    mostElevationGainDate: mostElevationGainDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  };
+}
+
 // Generate mock data for demo purposes
 function getMockData(startDateStr) {
   const startDate = new Date(startDateStr + 'T00:00:00Z');
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const startDateUTC = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
-  const daysDiff = Math.floor((todayUTC - startDateUTC) / (86400000));
-  const currentDay = Math.max(1, daysDiff + 1);
+  const daysDiff = Math.floor((todayUTC - startDateUTC) / MS_PER_DAY);
+  const currentDay = Math.max(MIN_DAY_ON_TRAIL, daysDiff + 1);
   
   // Mock trail progress (about 15% complete - realistic for a few weeks on trail)
   const totalMiles = 330.0;
@@ -161,36 +236,15 @@ function getMockData(startDateStr) {
   const mockLat = 38.6270;
   const mockLon = -78.3444;
   
-  // Generate forecast dates
-  const getDateString = (daysOffset) => {
-    const date = new Date(todayUTC);
-    date.setUTCDate(date.getUTCDate() + daysOffset);
-    return date.toISOString().split('T')[0];
-  };
-  
-  // Mock weather data
-  const mockWeather = {
-    current: {
-      temperature: 68,
-      condition: 'Partly cloudy',
-      humidity: 65,
-      windSpeed: 7,
-      windDirection: 180,
-      feelsLike: 70
-    },
-    forecast: [
-      { date: getDateString(0), high: 72, low: 58, condition: 'Partly cloudy' },
-      { date: getDateString(1), high: 75, low: 60, condition: 'Sunny' },
-      { date: getDateString(2), high: 70, low: 55, condition: 'Partly cloudy' },
-      { date: getDateString(3), high: 68, low: 52, condition: 'Light rain' },
-      { date: getDateString(4), high: 65, low: 50, condition: 'Partly cloudy' }
-    ]
-  };
+  // Generate mock data using helper functions
+  const mockWeather = generateMockWeather(todayUTC);
+  const recordDates = generateMockRecordDates(todayUTC);
   
   // Mock longest day record
   const longestDayMiles = 18.7;
-  const longestDayDate = new Date(todayUTC);
-  longestDayDate.setUTCDate(longestDayDate.getUTCDate() - 5); // 5 days ago
+  
+  // Mock most elevation gain record
+  const mostElevationGainFeet = 3420;
   
   return {
     startDate: startDate.toLocaleDateString('en-US'),
@@ -201,10 +255,267 @@ function getMockData(startDateStr) {
     currentDayOnTrail: currentDay,
     estimatedFinishDate: estFinish.toLocaleDateString('en-US'),
     longestDayMiles: longestDayMiles.toFixed(1),
-    longestDayDate: longestDayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    longestDayDate: recordDates.longestDayDate,
+    mostElevationGainFeet: mostElevationGainFeet.toString(),
+    mostElevationGainDate: recordDates.mostElevationGainDate,
     location: { lat: mockLat, lon: mockLon },
     weather: mockWeather
   };
+}
+
+// Generate mock elevation days (last 7 days)
+function getMockElevationDays(startDateStr) {
+  const days = [];
+  const today = new Date();
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(todayUTC);
+    date.setUTCDate(date.getUTCDate() - i);
+    days.push(getUTCDateString(date));
+  }
+  
+  return days;
+}
+
+// Generate mock elevation data for a specific day
+function getMockElevationData(dateStr, startDateStr) {
+  // Generate elevation points throughout the day
+  // Simulate a typical AT day with elevation changes
+  const baseElevation = 2000; // Base elevation in feet (typical AT elevation)
+  const points = [];
+  
+  // Generate points every 30 minutes from 6 AM to 8 PM (14 hours = 28 points)
+  const date = new Date(dateStr + 'T06:00:00Z');
+  
+  for (let i = 0; i < 28; i++) {
+    const pointTime = new Date(date);
+    pointTime.setUTCHours(6 + Math.floor(i / 2));
+    pointTime.setUTCMinutes((i % 2) * 30);
+    
+    // Simulate elevation changes - create a realistic profile
+    // Start low, climb up, go down, climb again, end lower
+    const progress = i / 27; // 0 to 1
+    let elevationVariation = 0;
+    
+    if (progress < 0.2) {
+      // Initial climb
+      elevationVariation = progress * 0.2 * 1500; // Climb 300 ft
+    } else if (progress < 0.4) {
+      // Descend
+      elevationVariation = 0.2 * 1500 - (progress - 0.2) * 0.2 * 1000; // Descend 200 ft
+    } else if (progress < 0.7) {
+      // Major climb
+      elevationVariation = 0.1 * 1500 + (progress - 0.4) * 0.3 * 2000; // Climb 600 ft
+    } else {
+      // Descend to end
+      elevationVariation = 0.7 * 2000 - (progress - 0.7) * 0.3 * 1500; // Descend 450 ft
+    }
+    
+    // Add some random variation (±50 ft)
+    const randomVariation = (Math.random() - 0.5) * 100;
+    const elevation = Math.round(baseElevation + elevationVariation + randomVariation);
+    
+    points.push({
+      time: pointTime.toISOString(),
+      elevation: elevation
+    });
+  }
+  
+  // Calculate min and max
+  const elevations = points.map(p => p.elevation);
+  const minElevation = Math.round(Math.min(...elevations));
+  const maxElevation = Math.round(Math.max(...elevations));
+  
+  // Calculate vertical climbed and loss using shared helper
+  const { verticalClimbed, verticalLoss } = calculateElevationStats(points);
+  
+  return {
+    date: dateStr,
+    points: points,
+    minElevation: minElevation,
+    maxElevation: maxElevation,
+    verticalClimbed: verticalClimbed,
+    verticalLoss: verticalLoss
+  };
+}
+
+/**
+ * Helper function to calculate elevation statistics from points array
+ * Used by both real and mock data generation to ensure consistency
+ * @param {Array<Object>} points - Array of point objects with elevation property
+ * @returns {{verticalClimbed: number, verticalLoss: number}} Object with calculated stats
+ */
+function calculateElevationStats(points) {
+  let verticalClimbed = 0;
+  let verticalLoss = 0;
+  
+  for (let i = 1; i < points.length; i++) {
+    const elevationChange = points[i].elevation - points[i - 1].elevation;
+    if (elevationChange > 0) {
+      verticalClimbed += elevationChange;
+    } else if (elevationChange < 0) {
+      verticalLoss += Math.abs(elevationChange);
+    }
+  }
+  
+  return {
+    verticalClimbed: Math.round(verticalClimbed),
+    verticalLoss: Math.round(verticalLoss)
+  };
+}
+
+// Elevation handler
+async function handleElevation(request, env) {
+  const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
+  const START_DATE_STR = env.START_DATE;
+  
+  const url = new URL(request.url);
+  const dayParam = url.searchParams.get('day');
+  
+  if (!dayParam) {
+    // Return list of available days
+    return handleElevationDays(request, env);
+  }
+  
+  // Validate date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dayParam)) {
+    return createErrorResponse(400, 'Invalid date format. Use YYYY-MM-DD', request);
+  }
+  
+  // If mock mode is enabled, return mock elevation data
+  if (USE_MOCK_DATA) {
+    const mockElevationData = getMockElevationData(dayParam, START_DATE_STR);
+    return createSuccessResponse(mockElevationData, request, {
+      'Cache-Control': 'public, max-age=300'
+    });
+  }
+  
+  try {
+    const elevationData = await getElevationByDay(dayParam, env);
+    
+    if (!elevationData || elevationData.points.length === 0) {
+      return createSuccessResponse({
+        date: dayParam,
+        points: [],
+        minElevation: null,
+        maxElevation: null,
+        verticalClimbed: null,
+        verticalLoss: null
+      }, request, {
+        'Cache-Control': 'public, max-age=300'
+      });
+    }
+    
+    return createSuccessResponse(elevationData, request, {
+      'Cache-Control': 'public, max-age=300'
+    });
+  } catch (error) {
+    return createErrorResponse(500, error.message, request);
+  }
+}
+
+// Get list of available days with elevation data
+async function handleElevationDays(request, env) {
+  const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
+  const START_DATE_STR = env.START_DATE;
+  
+  // If mock mode is enabled, return mock days
+  if (USE_MOCK_DATA) {
+    const mockDays = getMockElevationDays(START_DATE_STR);
+    return createSuccessResponse({ days: mockDays }, request, {
+      'Cache-Control': 'public, max-age=300'
+    });
+  }
+  
+  if (!env.TRAIL_HISTORY) {
+    return createSuccessResponse({ days: [] }, request);
+  }
+  
+  try {
+    const keys = await env.TRAIL_HISTORY.list({ prefix: 'points:' });
+    
+    // Batch KV reads in parallel for better performance
+    const readPromises = keys.keys.map(async (key) => {
+      const dateStr = key.name.replace('points:', '');
+      try {
+        const dayPointsJson = await env.TRAIL_HISTORY.get(key.name);
+        if (dayPointsJson) {
+          const dayPoints = JSON.parse(dayPointsJson);
+          // Check if any points have elevation data
+          const hasElevation = dayPoints.some(p => p.elevation !== null && p.elevation !== undefined);
+          return hasElevation ? dateStr : null;
+        }
+      } catch (error) {
+        console.error(`[Worker] Failed to read ${key.name}:`, error);
+      }
+      return null;
+    });
+    
+    const results = await Promise.all(readPromises);
+    const days = results.filter(dateStr => dateStr !== null);
+    
+    // Sort days descending (most recent first)
+    days.sort((a, b) => b.localeCompare(a));
+    
+    return createSuccessResponse({ days }, request, {
+      'Cache-Control': 'public, max-age=300'
+    });
+  } catch (error) {
+    return createErrorResponse(500, error.message, request);
+  }
+}
+
+// Get elevation data for a specific day
+async function getElevationByDay(dateStr, env) {
+  if (!env.TRAIL_HISTORY) {
+    return { points: [], minElevation: null, maxElevation: null, date: dateStr };
+  }
+  
+  try {
+    const kvKey = `points:${dateStr}`;
+    const dayPointsJson = await env.TRAIL_HISTORY.get(kvKey);
+    
+    if (!dayPointsJson) {
+      return { points: [], minElevation: null, maxElevation: null, date: dateStr };
+    }
+    
+    const dayPoints = JSON.parse(dayPointsJson);
+    
+    // Filter points with elevation data and convert to elevation points
+    const elevationPoints = dayPoints
+      .filter(p => p.elevation !== null && p.elevation !== undefined)
+      .map(p => ({
+        time: p.time,
+        elevation: Math.round(p.elevation * 10) / 10 // Round to 1 decimal place
+      }))
+      .sort((a, b) => new Date(a.time) - new Date(b.time));
+    
+    if (elevationPoints.length === 0) {
+      return { points: [], minElevation: null, maxElevation: null, verticalClimbed: null, verticalLoss: null, date: dateStr };
+    }
+    
+    // Calculate min and max elevation
+    const elevations = elevationPoints.map(p => p.elevation);
+    const minElevation = Math.round(Math.min(...elevations));
+    const maxElevation = Math.round(Math.max(...elevations));
+    
+  // Calculate vertical climbed and loss using shared helper
+  const { verticalClimbed, verticalLoss } = calculateElevationStats(elevationPoints);
+    
+    return {
+      date: dateStr,
+      points: elevationPoints,
+      minElevation,
+      maxElevation,
+      verticalClimbed,
+      verticalLoss
+    };
+  } catch (error) {
+    console.error(`[Worker] Failed to get elevation data for ${dateStr}:`, error);
+    return { points: [], minElevation: null, maxElevation: null, verticalClimbed: null, verticalLoss: null, date: dateStr };
+  }
 }
 
 export default {
@@ -225,32 +536,39 @@ export default {
     
     // Handle sync endpoint (requires authentication)
     if (url.pathname === '/sync' && request.method === 'GET') {
-      const authHeader = request.headers.get('Authorization');
-      const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-      
-      if (!token || !(await validateToken(token, env))) {
-        return createErrorResponse(401, 'Unauthorized - Invalid or missing token', request);
-      }
-      
+      const authError = await requireAuth(request, env);
+      if (authError) return authError;
       return handleSync(request, env);
     }
     
-    // Handle stats endpoint (requires authentication)
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
-    
-    if (!token || !(await validateToken(token, env))) {
-      return createErrorResponse(401, 'Unauthorized - Invalid or missing token', request);
+    // Handle elevation endpoint (requires authentication)
+    if (url.pathname === '/elevation' && request.method === 'GET') {
+      const authError = await requireAuth(request, env);
+      if (authError) return authError;
+      return handleElevation(request, env);
     }
     
-    return handleStats(request, env);
+    // Handle stats endpoint (requires authentication)
+    if (url.pathname === '/' && request.method === 'GET') {
+      const authError = await requireAuth(request, env);
+      if (authError) return authError;
+      return handleStats(request, env, ctx);
+    }
+    
+    // 404 for unknown routes
+    return createErrorResponse(404, 'Not Found', request);
   },
 };
 
 // Authentication handler
 async function handleAuth(request, env) {
   try {
-    const { password } = await request.json();
+    const body = await request.json();
+    if (!body || typeof body.password !== 'string') {
+      return createErrorResponse(400, 'Invalid request: password field is required and must be a string', request);
+    }
+    
+    const { password } = body;
     const CORRECT_PASSWORD = env.SITE_PASSWORD;
     
     if (!CORRECT_PASSWORD) {
@@ -387,13 +705,11 @@ function validateEnvVars(env, requireMapshare = true) {
 }
 
 // Stats handler (existing functionality)
-async function handleStats(request, env) {
+async function handleStats(request, env, ctx) {
   // Config from env
   const MAPSHARE_ID = env.MAPSHARE_ID;
   const MAPSHARE_PASSWORD = env.MAPSHARE_PASSWORD || '';
   const START_DATE_STR = env.START_DATE;
-  const START_LAT = env.START_LAT !== undefined ? parseFloat(env.START_LAT) : undefined;
-  const START_LON = env.START_LON !== undefined ? parseFloat(env.START_LON) : undefined;
   const TOTAL_TRAIL_MILES = 2197.9;
   const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
 
@@ -441,9 +757,17 @@ async function handleStats(request, env) {
       const stats = calculateStats(allPoints, START_DATE_STR, TOTAL_TRAIL_MILES);
 
       // Store new/updated points in KV (async, don't block response)
-      if (env.TRAIL_HISTORY && kmlPoints.length > 0) {
+      // Use ctx.waitUntil to ensure storage completes even after response is sent
+      if (env.TRAIL_HISTORY && kmlPoints.length > 0 && ctx) {
+        ctx.waitUntil(
+          storePointsByDay(kmlPoints, env).catch(err => {
+            console.error('[Worker] Failed to store points:', err);
+          })
+        );
+      } else if (env.TRAIL_HISTORY && kmlPoints.length > 0) {
+        // Fallback if ctx not available (shouldn't happen in production)
         storePointsByDay(kmlPoints, env).catch(err => {
-          console.error('Failed to store points:', err);
+          console.error('[Worker] Failed to store points:', err);
         });
       }
 
@@ -458,7 +782,7 @@ async function handleStats(request, env) {
         try {
           weather = await fetchWeather(currentPoint.lat, currentPoint.lon);
         } catch (error) {
-          console.error('Weather fetch failed:', error);
+          console.error('[Worker] Weather fetch failed:', error);
           // Continue without weather - graceful degradation
         }
       }
@@ -484,6 +808,15 @@ async function handleStats(request, env) {
 
 // Lightweight KML parser for Garmin format
 function parseKmlPoints(kmlText, startDate) {
+  // Input validation
+  if (!kmlText || typeof kmlText !== 'string') {
+    throw new Error('[Worker] Invalid KML text: must be a non-empty string');
+  }
+  
+  if (!startDate || !(startDate instanceof Date) || isNaN(startDate.getTime())) {
+    throw new Error('[Worker] Invalid startDate: must be a valid Date object');
+  }
+  
   const points = [];
   const placemarkRegex = /<Placemark>[\s\S]*?<\/Placemark>/g;
   const placemarks = kmlText.match(placemarkRegex) || [];
@@ -496,12 +829,14 @@ function parseKmlPoints(kmlText, startDate) {
     if (coordMatch && timeMatch) {
       const lon = parseFloat(coordMatch[1]);
       const lat = parseFloat(coordMatch[2]);
+      const elevationMeters = coordMatch[3] ? parseFloat(coordMatch[3]) : null;
+      const elevationFeet = elevationMeters !== null ? elevationMeters * 3.28084 : null;
       const time = new Date(timeMatch[1]);
       const velocityKmh = velocityMatch ? parseFloat(velocityMatch[1]) : 0;
       const velocityMph = velocityKmh * 0.621371;
 
       if (time >= startDate) {
-        points.push({ lat, lon, time, velocity: velocityMph });
+        points.push({ lat, lon, time, velocity: velocityMph, elevation: elevationFeet });
       }
     }
   }
@@ -536,7 +871,7 @@ async function loadHistoricalPoints(startDateStr, env) {
           allPoints.push(...parsedPoints);
         }
       } catch (error) {
-        console.error(`Failed to parse points for ${key.name}:`, error);
+        console.error(`[Worker] Failed to parse points for ${key.name}:`, error);
       }
     }
     
@@ -545,7 +880,7 @@ async function loadHistoricalPoints(startDateStr, env) {
       .filter(p => p.time >= startDate)
       .sort((a, b) => a.time - b.time);
   } catch (error) {
-    console.error('Failed to load historical points:', error);
+    console.error('[Worker] Failed to load historical points:', error);
     return [];
   }
 }
@@ -561,7 +896,7 @@ async function storePointsByDay(points, env) {
     const pointsByDay = new Map();
     
     for (const point of points) {
-      const dateKey = point.time.toISOString().split('T')[0];
+      const dateKey = getUTCDateString(point.time);
       if (!pointsByDay.has(dateKey)) {
         pointsByDay.set(dateKey, []);
       }
@@ -606,13 +941,14 @@ async function storePointsByDay(points, env) {
             lat: p.lat,
             lon: p.lon,
             time: p.time.toISOString(),
-            velocity: p.velocity
+            velocity: p.velocity,
+            elevation: p.elevation !== undefined ? p.elevation : null
           }));
         
         // Store in KV
         await env.TRAIL_HISTORY.put(kvKey, JSON.stringify(mergedPoints));
       } catch (error) {
-        console.error(`Failed to store points for ${dateKey}:`, error);
+        console.error(`[Worker] Failed to store points for ${dateKey}:`, error);
       }
     }
     
@@ -728,7 +1064,13 @@ async function fetchWeather(lat, lon) {
   };
 }
 
-// Calculate daily mileage for all days
+/**
+ * Calculate daily mileage for all days
+ * Groups points by UTC date and calculates distance for each day
+ * @param {Array<Object>} points - Array of point objects with lat, lon, time properties
+ * @param {string} startDateStr - Start date string in YYYY-MM-DD format
+ * @returns {Map<string, number>} Map of date strings to daily mileage
+ */
 function calculateDailyMileage(points, startDateStr) {
   const dailyMileageMap = new Map();
   
@@ -736,10 +1078,11 @@ function calculateDailyMileage(points, startDateStr) {
     return dailyMileageMap;
   }
   
-  // Group points by date
+  // Group points by UTC date (YYYY-MM-DD) for consistency with calculateStats
   const pointsByDate = new Map();
   for (const point of points) {
-    const dateKey = point.time.toISOString().split('T')[0];
+    // Ensure we're using UTC date string for consistent grouping
+    const dateKey = getUTCDateString(point.time);
     if (!pointsByDate.has(dateKey)) {
       pointsByDate.set(dateKey, []);
     }
@@ -771,7 +1114,72 @@ function calculateDailyMileage(points, startDateStr) {
   return dailyMileageMap;
 }
 
-// Main stats calculator
+/**
+ * Calculate daily elevation gain for all days
+ * Groups points by UTC date and calculates elevation gain for each day
+ * @param {Array<Object>} points - Array of point objects with elevation property
+ * @param {string} startDateStr - Start date string in YYYY-MM-DD format
+ * @returns {Map<string, number>} Map of date strings to daily elevation gain in feet
+ */
+function calculateDailyElevationGain(points, startDateStr) {
+  const dailyElevationGainMap = new Map();
+  
+  if (points.length < 2) {
+    return dailyElevationGainMap;
+  }
+  
+  // Group points by UTC date (YYYY-MM-DD) for consistency with other calculations
+  const pointsByDate = new Map();
+  for (const point of points) {
+    // Ensure we're using UTC date string for consistent grouping
+    const dateKey = getUTCDateString(point.time);
+    if (!pointsByDate.has(dateKey)) {
+      pointsByDate.set(dateKey, []);
+    }
+    pointsByDate.get(dateKey).push(point);
+  }
+  
+  // Calculate elevation gain for each day
+  for (const [dateKey, dayPoints] of pointsByDate.entries()) {
+    if (dayPoints.length < 2) {
+      dailyElevationGainMap.set(dateKey, 0);
+      continue;
+    }
+    
+    // Filter points with elevation data
+    const pointsWithElevation = dayPoints.filter(p => p.elevation !== null && p.elevation !== undefined);
+    
+    if (pointsWithElevation.length < 2) {
+      dailyElevationGainMap.set(dateKey, 0);
+      continue;
+    }
+    
+    let dayElevationGain = 0;
+    const sortedDayPoints = pointsWithElevation.sort((a, b) => a.time - b.time);
+    
+    // Sum all positive elevation changes
+    for (let i = 1; i < sortedDayPoints.length; i++) {
+      const prev = sortedDayPoints[i - 1];
+      const curr = sortedDayPoints[i];
+      const elevationChange = curr.elevation - prev.elevation;
+      if (elevationChange > 0) {
+        dayElevationGain += elevationChange;
+      }
+    }
+    
+    dailyElevationGainMap.set(dateKey, Math.round(dayElevationGain));
+  }
+  
+  return dailyElevationGainMap;
+}
+
+/**
+ * Main stats calculator - calculates all trail statistics from GPS points
+ * @param {Array<Object>} points - Array of point objects with lat, lon, time, velocity, elevation properties
+ * @param {string} startDateStr - Start date string in YYYY-MM-DD format
+ * @param {number} totalTrailMiles - Total trail length in miles
+ * @returns {Object} Object containing all calculated statistics
+ */
 function calculateStats(points, startDateStr, totalTrailMiles) {
   if (points.length < 2) {
     return { 
@@ -779,11 +1187,13 @@ function calculateStats(points, startDateStr, totalTrailMiles) {
       milesRemaining: totalTrailMiles.toFixed(1), 
       dailyDistance: '0.0', 
       averageSpeed: '0.0', 
-      currentDayOnTrail: 1, 
+      currentDayOnTrail: MIN_DAY_ON_TRAIL, 
       estimatedFinishDate: 'N/A',
       startDate: new Date(startDateStr + 'T00:00:00Z').toLocaleDateString('en-US'),
       longestDayMiles: '0.0',
-      longestDayDate: 'N/A'
+      longestDayDate: 'N/A',
+      mostElevationGainFeet: '0',
+      mostElevationGainDate: 'N/A'
     };
   }
 
@@ -796,14 +1206,39 @@ function calculateStats(points, startDateStr, totalTrailMiles) {
   const startDateUTC = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
   
   // Calculate difference in days and add 1 (so start date is day 1)
-  const daysDiff = Math.floor((todayUTC - startDateUTC) / (86400000));
-  const currentDay = Math.max(1, daysDiff + 1);
+  const daysDiff = Math.floor((todayUTC - startDateUTC) / MS_PER_DAY);
+  const currentDay = Math.max(MIN_DAY_ON_TRAIL, daysDiff + 1);
 
   let totalMiles = 0;
   let movingTimeHours = 0;
 
   // Today's points (UTC midnight to now)
   const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  
+  // Track daily mileage for all days (for longest day calculation)
+  const dailyMileageMap = new Map();
+  
+  /**
+   * Calculate distance traveled today (since UTC midnight)
+   * Only counts distances between points that both occur today
+   * @param {Date} pointTime - Time of the current point
+   * @param {Date} prevPointTime - Time of the previous point
+   * @param {number} distance - Distance between the two points
+   * @param {Date} todayStart - UTC midnight of today
+   * @returns {boolean} True if distance was counted toward today's miles
+   */
+  function addToTodayMiles(pointTime, prevPointTime, distance, todayStart) {
+    // Only count if current point is today
+    if (pointTime >= todayStart) {
+      // Only count distance if previous point was also today
+      // This ensures we don't count distance from yesterday to today
+      if (prevPointTime >= todayStart) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   let dailyMiles = 0;
   let prevToday = null;
 
@@ -814,15 +1249,22 @@ function calculateStats(points, startDateStr, totalTrailMiles) {
     totalMiles += dist;
 
     const timeDeltaHours = (curr.time - prev.time) / (1000 * 60 * 60);
-    if (curr.velocity > 1) { // Moving threshold
+    if (curr.velocity > MOVING_VELOCITY_THRESHOLD_MPH) { // Moving threshold
       movingTimeHours += timeDeltaHours;
     }
 
-    // Daily (assume points in UTC; adjust if hiker in specific TZ)
-    if (curr.time >= todayStart) {
-      if (prevToday && prev.time >= todayStart) {
-        dailyMiles += dist;
-      }
+    // Track daily mileage for all days
+    const currDateKey = getUTCDateString(curr.time);
+    if (!dailyMileageMap.has(currDateKey)) {
+      dailyMileageMap.set(currDateKey, 0);
+    }
+    dailyMileageMap.set(currDateKey, dailyMileageMap.get(currDateKey) + dist);
+
+    // Today's daily miles (assume points in UTC; adjust if hiker in specific TZ)
+    if (addToTodayMiles(curr.time, prev.time, dist, todayStart)) {
+      dailyMiles += dist;
+      prevToday = curr;
+    } else if (curr.time >= todayStart) {
       prevToday = curr;
     }
   }
@@ -831,24 +1273,40 @@ function calculateStats(points, startDateStr, totalTrailMiles) {
   // This converts straight-line GPS distance to approximate actual trail distance
   totalMiles = totalMiles * TRAIL_CORRECTION_FACTOR;
   dailyMiles = dailyMiles * TRAIL_CORRECTION_FACTOR;
+  
+  // Apply correction factor to all daily mileage values
+  for (const [dateKey, miles] of dailyMileageMap.entries()) {
+    dailyMileageMap.set(dateKey, miles * TRAIL_CORRECTION_FACTOR);
+  }
 
   const avgSpeed = movingTimeHours > 0 ? totalMiles / movingTimeHours : 0;
-  const completedDays = currentDay > 1 ? currentDay - 1 : 1; // Full days
+  const completedDays = currentDay > MIN_DAY_ON_TRAIL ? currentDay - 1 : MIN_DAY_ON_TRAIL; // Full days
   const avgDailyMiles = completedDays > 0 ? totalMiles / completedDays : 0;
   const milesRemaining = totalTrailMiles - totalMiles;
   const daysRemaining = avgDailyMiles > 0 ? Math.ceil(milesRemaining / avgDailyMiles) : 0;
   const estFinish = new Date(todayUTC);
   estFinish.setUTCDate(estFinish.getUTCDate() + daysRemaining);
 
-  // Calculate longest day record
-  const dailyMileage = calculateDailyMileage(points, startDateStr);
+  // Calculate longest day record (using dailyMileageMap calculated above)
   let longestDayMiles = 0;
   let longestDayDate = null;
   
-  for (const [date, miles] of dailyMileage.entries()) {
+  for (const [date, miles] of dailyMileageMap.entries()) {
     if (miles > longestDayMiles) {
       longestDayMiles = miles;
       longestDayDate = date;
+    }
+  }
+
+  // Calculate most elevation gain in a day record
+  const dailyElevationGain = calculateDailyElevationGain(points, startDateStr);
+  let mostElevationGainFeet = 0;
+  let mostElevationGainDate = null;
+  
+  for (const [date, elevationGain] of dailyElevationGain.entries()) {
+    if (elevationGain > mostElevationGainFeet) {
+      mostElevationGainFeet = elevationGain;
+      mostElevationGainDate = date;
     }
   }
 
@@ -861,7 +1319,9 @@ function calculateStats(points, startDateStr, totalTrailMiles) {
     currentDayOnTrail: currentDay,
     estimatedFinishDate: estFinish.toLocaleDateString('en-US'),
     longestDayMiles: longestDayDate ? longestDayMiles.toFixed(1) : '0.0',
-    longestDayDate: longestDayDate ? (new Date(longestDayDate + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) : 'N/A'
+    longestDayDate: longestDayDate ? (new Date(longestDayDate + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) : 'N/A',
+    mostElevationGainFeet: mostElevationGainDate ? mostElevationGainFeet.toString() : '0',
+    mostElevationGainDate: mostElevationGainDate ? (new Date(mostElevationGainDate + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) : 'N/A'
   };
   
   return result;

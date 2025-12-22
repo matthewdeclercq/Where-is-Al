@@ -734,6 +734,224 @@ main > p:first-of-type {
     margin-top: 0.5rem;
 }
 
+/* Elevation Profile Card */
+.elevation-profile-card {
+    grid-column: 1 / -1;
+    padding: 2.5rem;
+    margin-top: 1.5rem;
+    background: var(--gradient-card) !important;
+}
+
+.elevation-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.elevation-header .stat-icon {
+    margin-bottom: 0.5rem;
+}
+
+.elevation-header .stat-label {
+    margin-bottom: 0;
+}
+
+.day-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.day-nav-button {
+    padding: 0.5rem 0.75rem;
+    font-family: 'Cabin', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: var(--gradient-card);
+    border: 2px solid var(--earth-brown-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 2px 6px var(--shadow-color-light);
+    -webkit-tap-highlight-color: rgba(61, 107, 42, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.day-nav-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    border-color: var(--earth-brown);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--cream) 100%);
+}
+
+.day-nav-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--off-white);
+}
+
+.day-nav-button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px var(--shadow-color-light);
+}
+
+.day-nav-button i {
+    font-size: 1rem;
+}
+
+.day-display {
+    font-family: 'Cabin', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--forest-green-dark);
+    min-width: 120px;
+    text-align: center;
+    padding: 0.5rem 1rem;
+}
+
+.elevation-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    border: 2px solid var(--earth-brown-light);
+    flex-wrap: wrap;
+}
+
+.elevation-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.elevation-stat-icon {
+    font-size: 1.5rem;
+    color: var(--forest-green);
+    margin-bottom: 0.25rem;
+}
+
+.elevation-stat-icon-flipped {
+    transform: rotate(180deg);
+}
+
+.elevation-stat-label {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.elevation-stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--forest-green-dark);
+    line-height: 1;
+}
+
+.elevation-stat-unit {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.elevation-chart-container {
+    position: relative;
+    height: 400px;
+    min-height: 400px;
+    width: 100%;
+    margin-top: 1rem;
+    display: none;
+}
+
+#elevation-chart {
+    width: 100% !important;
+    max-width: 100%;
+    display: block;
+    background-color: var(--off-white) !important;
+}
+
+.elevation-placeholder {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-light);
+}
+
+/* Responsive adjustments for elevation card */
+@media (max-width: 768px) {
+    .elevation-profile-card {
+        padding: 1.5rem;
+    }
+
+    .elevation-header {
+        gap: 0.75rem;
+    }
+
+    .day-selector {
+        gap: 0.75rem;
+    }
+
+    .day-nav-button {
+        padding: 0.4rem 0.6rem;
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .day-display {
+        font-size: 0.9rem;
+        min-width: 100px;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .elevation-stats {
+        gap: 2rem;
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .elevation-stat-value {
+        font-size: 2rem;
+    }
+
+    .elevation-chart-container {
+        height: 300px;
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .elevation-profile-card {
+        padding: 1.25rem;
+    }
+
+    .elevation-stats {
+        gap: 1.5rem;
+    }
+
+    .elevation-stat-value {
+        font-size: 1.75rem;
+    }
+
+    .elevation-chart-container {
+        height: 250px;
+        min-height: 250px;
+    }
+}
+
 /* Weather Section */
 .weather-container {
     max-width: 1000px;

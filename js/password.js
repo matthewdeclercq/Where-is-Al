@@ -91,7 +91,7 @@
                 }
             }
         } catch (error) {
-            console.error('Auth error:', error);
+            console.error('[Password] Auth error:', error);
             showError('Unable to verify password. Please try again later.');
         } finally {
             isSubmitting = false;

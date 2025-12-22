@@ -98,25 +98,25 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <i class="fas fa-route stat-icon"></i>
-                    <h3 class="stat-label">Total Miles Completed</h3>
+                    <h3 class="stat-label">Total Distance Completed (mi)</h3>
                     <p class="stat-value" id="total-miles">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-flag-checkered stat-icon"></i>
-                    <h3 class="stat-label">Miles Remaining</h3>
+                    <h3 class="stat-label">Distance Remaining (mi)</h3>
                     <p class="stat-value" id="miles-remaining">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-walking stat-icon"></i>
-                    <h3 class="stat-label">Daily Distance (Last 24 Hours)</h3>
+                    <h3 class="stat-label">Daily Distance (Last 24 Hours) (mi)</h3>
                     <p class="stat-value" id="daily-distance">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-tachometer-alt stat-icon"></i>
-                    <h3 class="stat-label">Average Speed</h3>
+                    <h3 class="stat-label">Average Speed (mph)</h3>
                     <p class="stat-value" id="avg-speed">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
@@ -140,10 +140,61 @@
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-trophy stat-icon"></i>
-                    <h3 class="stat-label">Longest Day</h3>
+                    <h3 class="stat-label">Longest Distance in a Day (mi)</h3>
                     <p class="stat-value" id="longest-day-miles">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
+                <div class="stat-card">
+                    <i class="fas fa-mountain stat-icon"></i>
+                    <h3 class="stat-label">Most Elevation Gain in a Day (ft)</h3>
+                    <p class="stat-value" id="most-elevation-gain-feet">—</p>
+                    <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
+                </div>
+            </div>
+            <div class="elevation-profile-card stat-card">
+                <div class="elevation-header">
+                    <i class="fas fa-mountain stat-icon"></i>
+                    <h3 class="stat-label">Elevation Profile</h3>
+                    <div class="day-selector" id="elevation-day-selector">
+                        <button class="day-nav-button" id="elevation-day-prev" aria-label="Previous day" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="day-display" id="elevation-day-display">—</span>
+                        <button class="day-nav-button" id="elevation-day-next" aria-label="Next day" disabled>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="elevation-stats">
+                    <div class="elevation-stat">
+                        <i class="fas fa-mountain elevation-stat-icon"></i>
+                        <span class="elevation-stat-label">High Point</span>
+                        <span class="elevation-stat-value" id="elevation-max">—</span>
+                        <span class="elevation-stat-unit">ft</span>
+                    </div>
+                    <div class="elevation-stat">
+                        <i class="fas fa-mountain elevation-stat-icon elevation-stat-icon-flipped"></i>
+                        <span class="elevation-stat-label">Low Point</span>
+                        <span class="elevation-stat-value" id="elevation-min">—</span>
+                        <span class="elevation-stat-unit">ft</span>
+                    </div>
+                    <div class="elevation-stat">
+                        <i class="fas fa-arrow-trend-up elevation-stat-icon"></i>
+                        <span class="elevation-stat-label">Gain</span>
+                        <span class="elevation-stat-value" id="elevation-climbed">—</span>
+                        <span class="elevation-stat-unit">ft</span>
+                    </div>
+                    <div class="elevation-stat">
+                        <i class="fas fa-arrow-trend-down elevation-stat-icon"></i>
+                        <span class="elevation-stat-label">Loss</span>
+                        <span class="elevation-stat-value" id="elevation-loss">—</span>
+                        <span class="elevation-stat-unit">ft</span>
+                    </div>
+                </div>
+                <div class="elevation-chart-container">
+                    <canvas id="elevation-chart"></canvas>
+                </div>
+                <p class="stat-placeholder elevation-placeholder">Loading elevation data...</p>
             </div>
         </section>
 
@@ -181,6 +232,8 @@
     <script src="js/utils.js"></script>
     <script src="js/config.js"></script>
     <script src="js/api-client.js"></script>
+    <script src="js/date-utils.js"></script>
+    <script src="js/chart-utils.js"></script>
     <!-- Auth check - must be first to protect the page -->
     <script>
         // Check authentication before loading page content
@@ -201,6 +254,7 @@
     <script src="js/map.js"></script>
     <script src="js/stats.js"></script>
     <script src="js/weather.js"></script>
+    <script src="js/elevation.js"></script>
 </body>
 </html>
 
