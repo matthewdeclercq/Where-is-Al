@@ -657,11 +657,30 @@ main > p:first-of-type {
 
 /* Stats Section */
 
+.stat-group {
+    margin-bottom: 3rem;
+}
+
+.stat-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.stat-group-heading {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--trail-orange);
+    font-family: 'Cabin', sans-serif;
+    text-align: center;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 0;
 }
 
 .stat-card {
@@ -737,7 +756,7 @@ main > p:first-of-type {
 /* Elevation Profile Card */
 .elevation-profile-card {
     grid-column: 1 / -1;
-    padding: 2.5rem;
+    padding: 2.5rem 2.5rem 0 2.5rem;
     margin-top: 1.5rem;
     background: var(--gradient-card) !important;
 }
@@ -894,7 +913,7 @@ main > p:first-of-type {
 /* Responsive adjustments for elevation card */
 @media (max-width: 768px) {
     .elevation-profile-card {
-        padding: 1.5rem;
+        padding: 1.5rem 1.5rem 0 1.5rem;
     }
 
     .elevation-header {
@@ -935,15 +954,34 @@ main > p:first-of-type {
 
 @media (max-width: 480px) {
     .elevation-profile-card {
-        padding: 1.25rem;
+        padding: 1.25rem 1.25rem 0 1.25rem;
     }
 
     .elevation-stats {
-        gap: 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .elevation-stat {
+        min-width: 0;
     }
 
     .elevation-stat-value {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
+    }
+
+    .elevation-stat-icon {
+        font-size: 1.25rem;
+    }
+
+    .elevation-stat-label {
+        font-size: 0.75rem;
+    }
+
+    .elevation-stat-unit {
+        font-size: 0.8rem;
     }
 
     .elevation-chart-container {
@@ -1355,6 +1393,10 @@ main > p:first-of-type {
         grid-template-columns: 1fr;
     }
 
+    .stat-group-heading {
+        font-size: 1.25rem;
+    }
+
     .stat-value {
         font-size: 2.5rem;
     }
@@ -1408,6 +1450,15 @@ main > p:first-of-type {
 
     .about-content {
         padding: 1.5rem;
+    }
+
+    .stat-group {
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-group-heading {
+        font-size: 1.125rem;
+        margin-bottom: 1.25rem;
     }
 
     .stat-card {

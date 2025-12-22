@@ -406,6 +406,21 @@
     }
 
     /**
+     * Filter points to only include data from 6am to 8pm
+     */
+    function filterDaytimePoints(points) {
+        if (!points || points.length === 0) return [];
+        
+        return points.filter(point => {
+            if (!point.time) return false;
+            const date = new Date(point.time);
+            const hour = date.getHours();
+            // Include points from 6am (6) to 8pm (20, inclusive)
+            return hour >= 6 && hour <= 20;
+        });
+    }
+
+    /**
      * Update elevation chart
      */
     function updateChart(elevationData) {
@@ -440,9 +455,17 @@
             return;
         }
 
-        // Prepare data
-        const labels = elevationData.points.map(p => formatTime(p.time));
-        const elevations = elevationData.points.map(p => p.elevation);
+        // Filter points to only show data from 6am to 8pm
+        const filteredPoints = filterDaytimePoints(elevationData.points);
+        
+        if (filteredPoints.length === 0) {
+            console.warn('[Elevation] No data points found between 6am and 8pm');
+            return;
+        }
+
+        // Prepare data from filtered points
+        const labels = filteredPoints.map(p => formatTime(p.time));
+        const elevations = filteredPoints.map(p => p.elevation);
 
         // Calculate y-axis range
         const minElevation = Math.min(...elevations);
