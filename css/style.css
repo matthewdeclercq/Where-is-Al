@@ -238,8 +238,21 @@ p {
     display: none;
 }
 
-
-
+.copyright-notice {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ffffff;
+    font-size: 0.875rem;
+    text-align: center;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        1px 1px 2px rgba(0, 0, 0, 0.9);
+    padding: 0 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 10;
+}
 
 .password-label {
     font-size: 1.25rem;
@@ -310,69 +323,25 @@ p {
 }
 
 /* Base button styles - shared by all buttons */
-.password-button {
-    padding: 1rem 1.5rem;
+.base-button {
     font-size: 1rem;
     font-weight: 600;
-    color: #ffffff;
-    background: var(--forest-green);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-left: none;
-    border-radius: 0 10px 10px 0;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
     font-family: inherit;
-    box-shadow: 
-        0 4px 12px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
     touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
 }
 
-.password-button svg {
-    width: 20px;
-    height: 20px;
-    stroke: #ffffff;
-    fill: none;
-}
-
-.map-retry-button {
-    padding: 1rem 2rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--white);
-    background: var(--gradient-button);
-    border: 3px solid var(--earth-brown);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    font-family: inherit;
-    box-shadow: var(--button-shadow);
-    position: relative;
-    overflow: hidden;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.3);
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
-.password-button::before {
+.base-button::before {
     content: '';
     position: absolute;
     top: 0;
@@ -383,23 +352,40 @@ p {
     transition: left 0.5s ease-in-out;
 }
 
-.password-button:hover::before {
+.base-button:hover::before {
     left: 100%;
 }
 
-.map-retry-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease-in-out;
+.base-button:active {
+    transform: translateY(0) scale(0.98);
 }
 
-.map-retry-button:hover::before {
-    left: 100%;
+.base-button:focus {
+    outline: none;
+}
+
+/* Password button specific styles */
+.password-button {
+    padding: 1rem 1.5rem;
+    color: #ffffff;
+    background: var(--forest-green);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    min-width: 60px;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+}
+
+.password-button svg {
+    width: 20px;
+    height: 20px;
+    stroke: #ffffff;
+    fill: none;
 }
 
 .password-button:hover {
@@ -411,24 +397,9 @@ p {
         0 3px 6px rgba(0, 0, 0, 0.25),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
     border-color: rgba(255, 255, 255, 0.4);
-    transition: all 0.3s ease-in-out;
-}
-
-.map-retry-button:hover {
-    background: var(--gradient-button-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--button-shadow-hover);
-    border-color: var(--trail-orange-dark);
-    transition: all 0.3s ease-in-out;
-}
-
-.password-button:hover::before,
-.map-retry-button:hover::before {
-    left: 100%;
 }
 
 .password-button:active {
-    transform: translateY(0) scale(0.98);
     box-shadow: 
         0 2px 6px rgba(30, 58, 15, 0.3),
         0 1px 2px rgba(0, 0, 0, 0.2),
@@ -436,26 +407,42 @@ p {
 }
 
 .password-button:focus {
-    outline: none;
     box-shadow: 
         0 4px 12px rgba(30, 58, 15, 0.3),
         0 0 0 4px rgba(61, 107, 42, 0.25),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
+/* Map retry button specific styles */
+.map-retry-button {
+    padding: 0.75rem 2rem;
+    color: var(--white);
+    background: var(--gradient-button);
+    border: 3px solid var(--earth-brown);
+    border-radius: 10px;
+    box-shadow: var(--button-shadow);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.3);
+}
+
+.map-retry-button::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.map-retry-button:hover {
+    background: var(--gradient-button-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--button-shadow-hover);
+    border-color: var(--trail-orange-dark);
+}
+
 .map-retry-button:active {
-    transform: translateY(0) scale(0.98);
     box-shadow: var(--button-shadow-active);
 }
 
 .map-retry-button:focus {
-    outline: none;
     box-shadow: var(--button-shadow-focus);
-}
-
-/* Map retry button specific adjustments */
-.map-retry-button {
-    padding: 0.75rem 2rem;
 }
 
 .error-message {
@@ -755,10 +742,10 @@ main > p:first-of-type {
 }
 
 .weather-card {
-    background: var(--gradient-card);
+    background: var(--off-white);
     border-radius: 14px;
     padding: 2rem;
-    box-shadow: 
+    box-shadow:
         0 8px 24px var(--shadow-color),
         0 2px 6px var(--shadow-color-light),
         inset 0 1px 0 rgba(255, 255, 255, 0.25),
@@ -766,20 +753,6 @@ main > p:first-of-type {
     border: 3px solid var(--earth-brown);
     position: relative;
     overflow: hidden;
-}
-
-.weather-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--bg-secondary);
-    background-image: var(--card-texture-light);
-    pointer-events: none;
-    border-radius: inherit;
-    opacity: 0.7;
 }
 
 .weather-card > * {
@@ -855,10 +828,17 @@ main > p:first-of-type {
 }
 
 .weather-forecast {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
     margin-top: 2rem;
+    position: relative;
+    height: 350px;
+    min-height: 350px;
+}
+
+#weather-chart {
+    width: 100% !important;
+    max-width: 100%;
+    display: block;
+    background-color: var(--off-white) !important;
 }
 
 .forecast-card {
@@ -958,12 +938,12 @@ main > p:first-of-type {
     }
 
     .weather-forecast {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.75rem;
+        height: 300px;
+        min-height: 300px;
     }
 
-    .forecast-card {
-        padding: 1.25rem 0.75rem;
+    #weather-chart {
+        max-height: 350px;
     }
 }
 
@@ -981,7 +961,12 @@ main > p:first-of-type {
     }
 
     .weather-forecast {
-        grid-template-columns: repeat(2, 1fr);
+        height: 220px;
+        min-height: 220px;
+    }
+
+    #weather-chart {
+        max-height: 300px;
     }
 }
 
@@ -1100,6 +1085,16 @@ main > p:first-of-type {
 .site-footer p {
     color: var(--sky-blue-light);
     font-size: 0.95rem;
+}
+
+.site-footer a {
+    color: var(--sky-blue-light);
+    text-decoration: none;
+    transition: text-decoration 0.3s ease-in-out;
+}
+
+.site-footer a:hover {
+    text-decoration: underline;
 }
 
 

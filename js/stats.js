@@ -4,21 +4,22 @@
 
     // Configuration
     const StatsConfig = {
-        workerUrl: 'https://where-is-al.matthew-declercq.workers.dev/',
-        
-        // Refresh interval in milliseconds (default: 1 hour)
-        refreshInterval: 3600000,
-        
-        // Enable/disable automatic stats refresh
+        workerUrl: (typeof Utils !== 'undefined' && Utils.getConfig) 
+            ? Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/')
+            : 'https://where-is-al.matthew-declercq.workers.dev/',
+        refreshInterval: (typeof Utils !== 'undefined' && Utils.getConfig) 
+            ? Utils.getConfig('refreshIntervals.stats', 3600000)
+            : 3600000,
         enableAutoRefresh: true
     };
 
-    let refreshIntervalId = null;
-    let isLoading = false;
-    let isPageVisible = true;
-    let errorCount = 0;
-    let backoffDelay = 0;
-    const MAX_BACKOFF_DELAY = 300000; // 5 minutes max backoff
+    // Module state
+    const state = {
+        refreshIntervalId: null,
+        isLoading: false,
+        errorCount: 0,
+        backoffDelay: 0
+    };
 
     // Stat element IDs mapping
     const statElements = {
@@ -28,8 +29,12 @@
         'averageSpeed': 'avg-speed',
         'currentDayOnTrail': 'current-day',
         'estimatedFinishDate': 'est-finish',
-        'startDate': 'start-date'
+        'startDate': 'start-date',
+        'longestDayMiles': 'longest-day-miles'
     };
+
+    // Store stats globally for use in updateStatElement
+    let currentStats = null;
 
     /**
      * Update a single stat value in the DOM
@@ -40,7 +45,12 @@
 
         const element = document.getElementById(elementId);
         if (element) {
-            element.textContent = value;
+            // Special formatting for longest day (show miles and date)
+            if (key === 'longestDayMiles' && currentStats && currentStats.longestDayDate) {
+                element.textContent = `${value} mi (${currentStats.longestDayDate})`;
+            } else {
+                element.textContent = value;
+            }
             
             // Hide placeholder text in the same stat card
             const statCard = element.closest('.stat-card');
@@ -56,16 +66,19 @@
     /**
      * Update all stat values from the stats object
      */
-    function updateStatsDisplay(stats) {
-        if (!stats || typeof stats !== 'object') {
-            console.error('Invalid stats data received');
+    function updateStatsDisplay(statsData) {
+        if (!statsData || typeof statsData !== 'object') {
+            console.error('[Stats] Invalid stats data received:', statsData);
             return;
         }
 
+        // Store stats globally for use in updateStatElement
+        currentStats = statsData;
+
         // Update each stat element
         Object.keys(statElements).forEach(key => {
-            if (stats[key] !== undefined) {
-                updateStatElement(key, stats[key]);
+            if (statsData[key] !== undefined) {
+                updateStatElement(key, statsData[key]);
             }
         });
     }
@@ -74,7 +87,7 @@
      * Show error message in stat cards
      */
     function showStatsError(message) {
-        console.error('Stats error:', message);
+        console.error('[Stats] Error:', message);
         
         // Show error in first stat card as example
         const firstStatCard = document.querySelector('.stat-card');
@@ -91,75 +104,32 @@
      * Fetch stats from Cloudflare Worker
      */
     async function fetchStats() {
-        if (isLoading) {
-            return; // Prevent concurrent requests
-        }
-
-        // Don't fetch if page is hidden
-        if (!isPageVisible) {
+        if (!StatsConfig.workerUrl) {
+            console.warn('[Stats] Cloudflare Worker URL not configured. Update StatsConfig.workerUrl in js/stats.js');
             return;
         }
 
-        if (!StatsConfig.workerUrl || StatsConfig.workerUrl.includes('your-worker')) {
-            console.warn('Cloudflare Worker URL not configured. Update StatsConfig.workerUrl in js/stats.js');
-            return;
-        }
-
-        // Apply exponential backoff if there were recent errors
-        if (backoffDelay > 0) {
-            await new Promise(resolve => setTimeout(resolve, backoffDelay));
-        }
-
-        isLoading = true;
-
-        try {
-            const response = await fetch(StatsConfig.workerUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
+        await window.ApiClient.fetch(
+            StatsConfig.workerUrl,
+            { method: 'GET' },
+            {
+                onSuccess: (stats) => {
+                    updateStatsDisplay(stats);
+                },
+                onError: (error) => {
+                    showStatsError(error.message);
                 }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const stats = await response.json();
-
-            // Check for error in response
-            if (stats.error) {
-                throw new Error(stats.error);
-            }
-
-            // Success - reset error count and backoff
-            errorCount = 0;
-            backoffDelay = 0;
-
-            // Update the display
-            updateStatsDisplay(stats);
-            
-        } catch (error) {
-            errorCount++;
-            // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s (max 5 min)
-            backoffDelay = Math.min(Math.pow(2, errorCount - 1) * 1000, MAX_BACKOFF_DELAY);
-            console.warn(`Stats fetch failed (attempt ${errorCount}), retrying in ${backoffDelay}ms:`, error.message);
-            showStatsError(error.message);
-        } finally {
-            isLoading = false;
-        }
+            },
+            state
+        );
     }
 
     /**
      * Setup automatic refresh
      */
     function setupAutoRefresh() {
-        if (refreshIntervalId) {
-            clearInterval(refreshIntervalId);
-        }
-
-        // Only set up interval if page is visible
-        if (isPageVisible && StatsConfig.enableAutoRefresh && StatsConfig.refreshInterval > 0) {
-            refreshIntervalId = setInterval(fetchStats, StatsConfig.refreshInterval);
+        if (StatsConfig.enableAutoRefresh) {
+            window.ApiClient.setupAutoRefresh(fetchStats, StatsConfig.refreshInterval, state);
         }
     }
 
@@ -167,23 +137,7 @@
      * Handle page visibility changes
      */
     function handleVisibilityChange() {
-        isPageVisible = !document.hidden;
-        
-        if (isPageVisible) {
-            // Page became visible - resume polling
-            setupAutoRefresh();
-            // Reset error count and backoff when page becomes visible
-            errorCount = 0;
-            backoffDelay = 0;
-            // Fetch immediately when page becomes visible
-            fetchStats();
-        } else {
-            // Page became hidden - pause polling
-            if (refreshIntervalId) {
-                clearInterval(refreshIntervalId);
-                refreshIntervalId = null;
-            }
-        }
+        window.ApiClient.handleVisibilityChange(fetchStats, setupAutoRefresh, state);
     }
 
     /**
@@ -203,18 +157,31 @@
      * Cleanup on page unload
      */
     function cleanup() {
-        if (refreshIntervalId) {
-            clearInterval(refreshIntervalId);
-            refreshIntervalId = null;
+        window.ApiClient.cleanup(state);
+        // Unregister visibility handler if Utils is available
+        if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
+            Utils.VisibilityManager.unregister(handleVisibilityChange);
         }
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
 
     // Initialize when DOM is ready
-    Utils.ready(initializeStats);
+    (function init() {
+        if (typeof Utils !== 'undefined' && Utils.ready) {
+            Utils.ready(initializeStats);
+        } else if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeStats);
+        } else {
+            initializeStats();
+        }
+    })();
 
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Register visibility change handler with shared manager if available
+    if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
+        Utils.VisibilityManager.register(handleVisibilityChange);
+    } else {
+        // Fallback to direct listener only if Utils is not available
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);

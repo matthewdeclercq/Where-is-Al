@@ -10,7 +10,9 @@
         mapShareUrl: null,
         
         // Auto-refresh interval in milliseconds (30 minutes - trail location changes slowly)
-        refreshInterval: 1800000,
+        refreshInterval: (typeof Utils !== 'undefined' && Utils.getConfig) 
+            ? Utils.getConfig('refreshIntervals.map', 1800000)
+            : 1800000,
         
         // Enable/disable automatic map refresh
         enableAutoRefresh: true
@@ -24,7 +26,7 @@
         mapContainer = document.querySelector('.map-container');
         
         if (!mapContainer) {
-            console.warn('Map container not found');
+            console.warn('[Map] Map container not found');
             return;
         }
 
@@ -58,22 +60,28 @@
         iframe.setAttribute('loading', 'lazy');
         iframe.setAttribute('title', 'Garmin InReach MapShare');
         
-        iframe.addEventListener('load', function() {
-            loadingDiv.remove();
-            mapContainer.appendChild(iframe);
-        });
+        let iframeAppended = false;
+        
+        function appendIframe() {
+            if (!iframeAppended) {
+                iframeAppended = true;
+                if (loadingDiv.parentNode) {
+                    loadingDiv.remove();
+                }
+                if (!mapContainer.querySelector('.map-iframe')) {
+                    mapContainer.appendChild(iframe);
+                }
+            }
+        }
+        
+        iframe.addEventListener('load', appendIframe);
 
         iframe.addEventListener('error', function() {
             handleMapError('Failed to load map. Please check your MapShare URL.');
         });
 
         setTimeout(function() {
-            if (loadingDiv.parentNode) {
-                loadingDiv.remove();
-                if (!mapContainer.querySelector('.map-iframe')) {
-                    mapContainer.appendChild(iframe);
-                }
-            }
+            appendIframe();
         }, 3000);
     }
 
@@ -90,7 +98,7 @@
         mapContainer.innerHTML = `
             <div class="map-error">
                 <p>${message || 'Unable to load map at this time.'}</p>
-                <button class="map-retry-button" onclick="window.location.reload()">Retry</button>
+                <button class="base-button map-retry-button" onclick="window.location.reload()">Retry</button>
             </div>
         `;
     }
@@ -141,14 +149,27 @@
             clearInterval(refreshIntervalId);
             refreshIntervalId = null;
         }
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        // Unregister visibility handler if Utils is available
+        if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
+            Utils.VisibilityManager.unregister(handleVisibilityChange);
+        }
     }
 
     // Initialize when DOM is ready
-    Utils.ready(initializeMap);
+    (function init() {
+        if (typeof Utils !== 'undefined' && Utils.ready) {
+            Utils.ready(initializeMap);
+        } else if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeMap);
+        } else {
+            initializeMap();
+        }
+    })();
 
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Register visibility change handler with shared manager
+    if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
+        Utils.VisibilityManager.register(handleVisibilityChange);
+    }
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);

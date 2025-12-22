@@ -39,20 +39,57 @@
             
             // Fetch manifest
             const manifestPath = basePath + 'log-entries/manifest.json';
-            const filenames = await fetchHTML(manifestPath).then(text => JSON.parse(text));
+            let filenames;
+            try {
+                const manifestText = await fetchHTML(manifestPath);
+                filenames = JSON.parse(manifestText);
+            } catch (parseError) {
+                console.error('Failed to parse manifest.json:', parseError);
+                throw new Error(`Invalid manifest format: ${parseError.message}`);
+            }
             
             if (!Array.isArray(filenames) || filenames.length === 0) return;
 
-            // Sort by filename (newest first) and load sequentially to ensure correct order
+            // Sort by filename (newest first) and load in parallel for better performance
+            // Load all entries in parallel, then insert in order
             const sortedFilenames = [...filenames].sort().reverse();
-            for (const filename of sortedFilenames) {
-                await loadLogEntry('#log-grid', basePath + 'log-entries/' + filename);
+            const loadPromises = sortedFilenames.map(async (filename) => {
+                try {
+                    const html = await fetchHTML(basePath + 'log-entries/' + filename);
+                    return { filename, html };
+                } catch (error) {
+                    console.warn(`[LogLoader] Failed to load ${filename}:`, error);
+                    return { filename, html: null };
+                }
+            });
+            
+            const results = await Promise.all(loadPromises);
+            // Sort results by filename (newest first) to ensure correct display order
+            // This handles any edge cases where order might not be preserved
+            const sortedResults = results
+                .filter(result => result.html !== null)
+                .sort((a, b) => {
+                    // Sort by filename descending (newest first)
+                    return b.filename.localeCompare(a.filename);
+                });
+            
+            // Insert in sorted order
+            for (const { html } of sortedResults) {
+                logGrid.insertAdjacentHTML('beforeend', html);
             }
         } catch (error) {
-            console.error('Failed to load log entries:', error);
+            console.error('[LogLoader] Failed to load log entries:', error);
         }
     }
 
     // Auto-initialize when DOM is ready
-    Utils.ready(loadLogEntries);
+    (function init() {
+        if (typeof Utils !== 'undefined' && Utils.ready) {
+            Utils.ready(loadLogEntries);
+        } else if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadLogEntries);
+        } else {
+            loadLogEntries();
+        }
+    })();
 })();

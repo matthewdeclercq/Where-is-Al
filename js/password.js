@@ -2,10 +2,12 @@
 (function() {
     'use strict';
 
-    const AUTH_ENDPOINT = 'https://where-is-al.matthew-declercq.workers.dev/auth';
+    const AUTH_ENDPOINT = (window.Config && window.Config.workerUrl) 
+        ? window.Config.workerUrl + 'auth' 
+        : 'https://where-is-al.matthew-declercq.workers.dev/auth';
     const MAIN_PAGE = 'main.html';
-    const MAX_ATTEMPTS = 5;
-    const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
+    const MAX_ATTEMPTS = window.Config ? window.Config.auth.maxAttempts : 5;
+    const LOCKOUT_TIME = window.Config ? window.Config.auth.lockoutTime : 15 * 60 * 1000;
 
     let form, input, errorMessage;
     let attempts = parseInt(sessionStorage.getItem('password_attempts') || '0');
@@ -131,5 +133,13 @@
     }
 
     // Initialize when DOM is ready
-    Utils.ready(initPassword);
+    (function init() {
+        if (typeof Utils !== 'undefined' && Utils.ready) {
+            Utils.ready(initPassword);
+        } else if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPassword);
+        } else {
+            initPassword();
+        }
+    })();
 })();

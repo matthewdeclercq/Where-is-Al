@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#1e3a0f">
     <meta name="msapplication-TileColor" content="#1e3a0f">
     <meta name="color-scheme" content="light">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Where Is Al">
     <meta name="author" content="Where Is Al">
@@ -34,6 +34,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <header class="site-header">
@@ -82,7 +83,7 @@
                         </div>
                     </div>
                     <div id="weather-forecast" class="weather-forecast">
-                        <!-- Forecast cards will be added here dynamically -->
+                        <canvas id="weather-chart"></canvas>
                     </div>
                     <div class="weather-placeholder" style="display: none;">
                         <p>Weather data will appear here once Al's location is available.</p>
@@ -138,9 +139,9 @@
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
                 <div class="stat-card">
-                    <i class="fas fa-hamburger stat-icon"></i>
-                    <h3 class="stat-label">Cheeseburgers Consumed</h3>
-                    <p class="stat-value">—</p>
+                    <i class="fas fa-trophy stat-icon"></i>
+                    <h3 class="stat-label">Longest Day</h3>
+                    <p class="stat-value" id="longest-day-miles">—</p>
                     <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                 </div>
             </div>
@@ -161,6 +162,7 @@
             <div class="about-content">
                 <p>The Appalachian Trail (AT) is one of the longest continuously marked footpaths in the world, stretching approximately 2,190 miles through 14 states from Springer Mountain in Georgia to Mount Katahdin in Maine.</p>
                 <p>Each year, thousands of hikers attempt to complete the entire trail, known as a "thru-hike." The journey typically takes 5-7 months and challenges hikers with diverse terrain, weather conditions, and the mental fortitude required for such an extended adventure.</p>
+                <p>The trail winds through some of America's most beautiful landscapes, from the misty peaks of the Great Smoky Mountains to the rocky summits of New England's White Mountains. Along the way, hikers encounter cascading waterfalls, ancient forests, and wildlife ranging from curious bears to colorful songbirds.</p>
                 <p>Follow along as Al tackles this incredible journey, sharing stories, challenges, and triumphs from the trail!</p>
                 <figure class="about-image">
                     <img src="assets/watermelon_al.jpg" alt="Al enjoying his watermelon water on the Appalachian Trail" loading="lazy">
@@ -172,9 +174,13 @@
 
     <footer class="site-footer">
         <p>Following Al's Appalachian Trail adventure</p>
+        <p>&copy; 2026 Copper Tech LLC. All rights reserved.</p>
+        <p>Report any issues to <a href="mailto:matthew@coppertech.co">matthew@coppertech.co</a></p>
     </footer>
 
     <script src="js/utils.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api-client.js"></script>
     <!-- Auth check - must be first to protect the page -->
     <script>
         // Check authentication before loading page content

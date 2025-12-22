@@ -24,7 +24,29 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
 4. Paste it into the Cloudflare Workers editor, replacing the default code
 5. Click **Save and deploy**
 
-## Step 3: Configure Environment Variables
+## Step 3: Create KV Namespace (Optional but Recommended)
+
+To preserve historical trail data even if Garmin's feed has limited retention:
+
+1. In your Cloudflare dashboard, navigate to **Workers & Pages** > **KV**
+2. Click **Create a namespace**
+3. Name it `trail-history` (or your preferred name)
+4. Click **Add**
+5. Note the namespace ID - you'll need it in the next step
+
+## Step 4: Bind KV Namespace to Worker
+
+1. In your Worker dashboard, go to **Settings** > **Variables**
+2. Scroll down to **KV Namespace Bindings**
+3. Click **Add binding**
+4. Set:
+   - **Variable name**: `TRAIL_HISTORY`
+   - **KV namespace**: Select `trail-history` (or the namespace you created)
+5. Click **Save**
+
+**Note**: If you don't configure KV, the worker will still function but won't store historical data. Stats will be calculated only from the current Garmin feed.
+
+## Step 5: Configure Environment Variables
 
 1. In your Worker dashboard, go to **Settings** > **Variables**
 2. Add the following environment variables:
@@ -60,7 +82,7 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
 4. For passwords, click **Encrypt** to store as a secret
 5. Click **Save**
 
-## Step 4: Get Your Worker URL
+## Step 6: Get Your Worker URL
 
 1. After deploying, your Worker will have a URL like:
    ```
@@ -68,7 +90,7 @@ This guide walks you through setting up a Cloudflare Worker to calculate and ser
    ```
 2. Copy this URL - you'll need it for the frontend configuration
 
-## Step 5: Update Frontend Configuration
+## Step 7: Update Frontend Configuration
 
 1. Open `js/stats.js` in your project
 2. Find the `StatsConfig` object at the top
@@ -88,7 +110,7 @@ The site uses server-side password validation for security:
 - Rate limiting: 5 attempts max, then 15-minute lockout
 - Main page is protected and redirects to password page if not authenticated
 
-## Step 6: Test the Worker
+## Step 8: Test the Worker
 
 1. Visit your Worker URL directly in a browser
 2. You should see JSON output with trail statistics, for example:
@@ -108,12 +130,45 @@ The site uses server-side password validation for security:
    - MapShare ID is correct
    - MapShare is publicly accessible (or password is correct)
 
-## Step 7: Test Frontend Integration
+## Step 9: Test Frontend Integration
 
 1. Open your website (`main.html`)
 2. Check the browser console for any errors
 3. The stats should automatically load and update the stat cards
 4. Stats will refresh every hour automatically
+
+## Historical Data Storage
+
+The worker automatically stores all GPS points from the Garmin feed in Cloudflare KV, organized by day. This provides several benefits:
+
+- **Data Preservation**: Historical trail data is preserved even if Garmin's feed loses old points
+- **Personal Records**: Enables calculation of records like longest day, average daily mileage, etc.
+- **Complete History**: Full trail history available for analysis and visualization
+
+### How It Works
+
+- Points are stored daily: `points:YYYY-MM-DD` → JSON array of points for that day
+- Points are automatically merged and deduplicated when new data arrives
+- Stats are calculated from the complete historical dataset (KV + current KML feed)
+- Storage happens asynchronously and doesn't block stats responses
+
+### Manual Sync Endpoint
+
+You can manually trigger a sync by visiting:
+```
+https://your-worker.workers.dev/sync
+```
+
+This will:
+- Fetch latest KML from Garmin
+- Store all points in KV
+- Return sync status and point counts
+
+### Storage Limits
+
+- KV free tier: 100GB total storage, 25MB per value
+- Daily point arrays typically stay well under 25MB
+- Points are stored indefinitely (no automatic expiration)
 
 ## Troubleshooting
 
@@ -122,6 +177,7 @@ The site uses server-side password validation for security:
 - **Check environment variables**: Ensure all required variables are set
 - **Verify MapShare ID**: Make sure the ID matches your Garmin MapShare URL
 - **Check MapShare access**: Ensure the MapShare is accessible (try the KML URL directly)
+- **Check KV namespace**: If using historical storage, verify KV namespace is bound correctly
 
 ### Stats Not Updating on Frontend
 
@@ -134,6 +190,12 @@ The site uses server-side password validation for security:
 - **Check KML feed**: Visit `https://share.garmin.com/Feed/Share/YOUR_MAPSHARE_ID` to verify data exists
 - **Verify start date**: Points before the start date are filtered out
 - **Check date format**: Start date must be YYYY-MM-DD format
+
+### KV Storage Issues
+
+- **KV namespace not bound**: Check that `TRAIL_HISTORY` is bound in Worker settings
+- **Storage errors**: Check Worker logs for KV write errors (non-critical, won't block stats)
+- **No historical data**: First run will only have current KML data; historical data accumulates over time
 
 ## Using Mock Data for Demos
 
