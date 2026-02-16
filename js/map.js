@@ -186,7 +186,7 @@
                 milestones.forEach(function(ms) {
                     var icon = L.divIcon({
                         className: 'milestone-icon',
-                        html: '<i class="fas fa-mountain" style="color: #5a3a1f;"></i>',
+                        html: '<i class="fas fa-mountain" style="color: #a78bfa;"></i>',
                         iconSize: [20, 20],
                         iconAnchor: [10, 10]
                     });
@@ -247,7 +247,11 @@
             var isOnTrail = point.onTrail !== false;
 
             if (isLast) {
-                // Current position - large bright marker with dark border
+                // Most recent point - large bright marker with dark border
+                var pointAge = point.time ? (Date.now() - new Date(point.time).getTime()) : Infinity;
+                var isRecent = pointAge < 24 * 60 * 60 * 1000; // within 24 hours
+                var positionLabel = isRecent ? 'Current Position' : 'Last Known Position';
+
                 currentMarker = L.circleMarker([point.lat, point.lon], {
                     radius: 12,
                     fillColor: MapConfig.currentPositionColor,
@@ -259,7 +263,7 @@
 
                 var timeStr = point.time ? new Date(point.time).toLocaleString() : 'Unknown';
                 var elevStr = point.elevation != null ? point.elevation + ' ft' : 'N/A';
-                var popupContent = '<strong>Current Position</strong>' +
+                var popupContent = '<strong>' + positionLabel + '</strong>' +
                     '<div class="popup-time">' + timeStr + '</div>' +
                     '<div>Elevation: ' + elevStr + '</div>' +
                     (isOnTrail ? '' : '<div style="color: #999; font-style: italic;">Off trail</div>');
@@ -318,6 +322,32 @@
         if (allCoords.length > 0) {
             var bounds = L.latLngBounds(allCoords);
             map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+        }
+
+        // Update tracker status indicator
+        updateTrackerStatus(points);
+    }
+
+    function updateTrackerStatus(points) {
+        var dot = document.getElementById('tracker-status-dot');
+        var label = document.getElementById('tracker-status-label');
+        if (!dot || !label) return;
+
+        var lastPoint = points.length > 0 ? points[points.length - 1] : null;
+        var THIRTY_MIN = 30 * 60 * 1000;
+
+        if (lastPoint && lastPoint.time) {
+            var age = Date.now() - new Date(lastPoint.time).getTime();
+            if (age < THIRTY_MIN) {
+                dot.className = 'tracker-status-dot tracker-on';
+                label.textContent = 'Tracker: ON';
+            } else {
+                dot.className = 'tracker-status-dot tracker-off';
+                label.textContent = 'Tracker: OFF';
+            }
+        } else {
+            dot.className = 'tracker-status-dot tracker-off';
+            label.textContent = 'Tracker: OFF';
         }
     }
 

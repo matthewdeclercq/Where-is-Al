@@ -1,14 +1,12 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
-import { validateEnvVars, buildKmlUrl } from './utils.js';
-import { parseKmlPoints } from './kml.js';
-import { loadHistoricalPoints, storePointsByDay, mergePoints } from './storage.js';
+import { validateEnvVars } from './utils.js';
+import { loadHistoricalPoints } from './storage.js';
 import { tagPointsOnOffTrail } from './trail-proximity.js';
 import { AT_TRAIL_COORDS } from './at-trail-simplified.js';
 import { DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
 
-export async function handlePoints(request, env, ctx) {
-  const MAPSHARE_ID = env.MAPSHARE_ID;
-  const MAPSHARE_PASSWORD = env.MAPSHARE_PASSWORD || '';
+// Points handler — reads points from KV only (cron handles KML polling)
+export async function handlePoints(request, env) {
   const START_DATE_STR = env.START_DATE;
   const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
 
@@ -33,32 +31,11 @@ export async function handlePoints(request, env, ctx) {
     });
   }
 
-  const kmlUrl = buildKmlUrl(MAPSHARE_ID, MAPSHARE_PASSWORD);
-
   try {
-    const kmlResponse = await fetch(kmlUrl);
-    if (!kmlResponse.ok) throw new Error('Failed to fetch KML');
-    const kmlText = await kmlResponse.text();
-
-    const kmlPoints = parseKmlPoints(kmlText, new Date(START_DATE_STR));
-    const historicalPoints = await loadHistoricalPoints(START_DATE_STR, env);
-    const allPoints = mergePoints(kmlPoints, historicalPoints);
+    const allPoints = await loadHistoricalPoints(START_DATE_STR, env);
 
     // Tag on/off trail
     tagPointsOnOffTrail(allPoints, AT_TRAIL_COORDS, thresholdMiles);
-
-    // Store points in background
-    if (env.TRAIL_HISTORY && kmlPoints.length > 0 && ctx) {
-      ctx.waitUntil(
-        storePointsByDay(kmlPoints, env).catch(err => {
-          console.error('[Worker] Failed to store points:', err);
-        })
-      );
-    } else if (env.TRAIL_HISTORY && kmlPoints.length > 0) {
-      storePointsByDay(kmlPoints, env).catch(err => {
-        console.error('[Worker] Failed to store points:', err);
-      });
-    }
 
     // Serialize points for response
     const responsePoints = allPoints.map(p => ({

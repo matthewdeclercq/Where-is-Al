@@ -6,23 +6,24 @@ compatibility_date = "2024-12-01"
 port = 8788
 
 # KV Namespace binding
-# Get your namespace ID with: npx wrangler kv namespace list
-# Then uncomment and fill in below:
-# [[kv_namespaces]]
-# binding = "TRAIL_HISTORY"
-# id = "your-kv-namespace-id-here"
+[[kv_namespaces]]
+binding = "TRAIL_HISTORY"
+id = "f7b75c01987e46fe9ab1b7a110cb12bd"
 
-# Environment variables are set via:
-#   - Secrets (recommended for passwords): npx wrangler secret put SITE_PASSWORD
-#   - .dev.vars file for local development (see .dev.vars.example)
-#
-# Required env vars:
-#   MAPSHARE_ID      - Garmin MapShare ID
-#   START_DATE       - Trail start date (YYYY-MM-DD)
-#   START_LAT        - Starting latitude
-#   START_LON        - Starting longitude
-#   SITE_PASSWORD    - Password for site access (use wrangler secret put)
-#
-# Optional env vars:
-#   MAPSHARE_PASSWORD - MapShare password if set
-#   USE_MOCK_DATA     - Set to "true" for demo/dev mode
+# Non-secret environment variables
+[vars]
+MAPSHARE_ID = "J8EKHXCDB5"
+START_DATE = "2025-03-01"
+START_LAT = "34.6269"
+START_LON = "-84.1939"
+
+# Observability (logs, errors, metrics in Cloudflare dashboard)
+[observability]
+enabled = true
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+# Secrets (set via: npx wrangler secret put <NAME>):
+#   SITE_PASSWORD      - Password for site access (already set)
+#   MAPSHARE_PASSWORD  - MapShare password if set

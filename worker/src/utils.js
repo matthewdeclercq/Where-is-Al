@@ -29,13 +29,21 @@ export function calculateCurrentDay(startDateStr) {
   return { currentDay: Math.max(1, daysDiff + 1), todayUTC, startDate };
 }
 
-// Build KML URL from MapShare ID and password
-export function buildKmlUrl(mapshareId, password) {
-  let kmlUrl = `https://share.garmin.com/Feed/Share/${mapshareId}`;
-  if (password) {
-    kmlUrl += `?pw=${password}`;
+// Build KML URL from MapShare ID
+export function buildKmlUrl(mapshareId) {
+  return `https://share.garmin.com/Feed/Share/${mapshareId}`;
+}
+
+// Build fetch options for KML request (Garmin uses HTTP Basic Auth)
+export function buildKmlFetchOptions(password) {
+  if (!password) {
+    return {};
   }
-  return kmlUrl;
+  return {
+    headers: {
+      'Authorization': 'Basic ' + btoa(':' + password)
+    }
+  };
 }
 
 // Validate environment variables

@@ -1,5 +1,5 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
-import { validateEnvVars, buildKmlUrl } from './utils.js';
+import { validateEnvVars, buildKmlUrl, buildKmlFetchOptions } from './utils.js';
 import { getMockData } from './mock.js';
 import { parseKmlPoints } from './kml.js';
 import { calculateStats } from './stats.js';
@@ -9,10 +9,8 @@ import { TOTAL_TRAIL_MILES, DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constant
 import { tagPointsOnOffTrail } from './trail-proximity.js';
 import { AT_TRAIL_COORDS } from './at-trail-simplified.js';
 
-// Stats handler
-export async function handleStats(request, env, ctx) {
-  const MAPSHARE_ID = env.MAPSHARE_ID;
-  const MAPSHARE_PASSWORD = env.MAPSHARE_PASSWORD || '';
+// Stats handler — reads points from KV only (cron handles KML polling)
+export async function handleStats(request, env) {
   const START_DATE_STR = env.START_DATE;
   const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
 
@@ -36,18 +34,8 @@ export async function handleStats(request, env, ctx) {
     });
   }
 
-  const kmlUrl = buildKmlUrl(MAPSHARE_ID, MAPSHARE_PASSWORD);
-
   try {
-    const kmlResponse = await fetch(kmlUrl);
-    if (!kmlResponse.ok) throw new Error('Failed to fetch KML');
-    const kmlText = await kmlResponse.text();
-
-    const kmlPoints = parseKmlPoints(kmlText, new Date(START_DATE_STR));
-
-    const historicalPoints = await loadHistoricalPoints(START_DATE_STR, env);
-
-    const allPoints = mergePoints(kmlPoints, historicalPoints);
+    const allPoints = await loadHistoricalPoints(START_DATE_STR, env);
 
     // Tag points as on/off trail and filter for stats
     const thresholdMiles = env.OFF_TRAIL_THRESHOLD
@@ -56,18 +44,6 @@ export async function handleStats(request, env, ctx) {
     tagPointsOnOffTrail(allPoints, AT_TRAIL_COORDS, thresholdMiles);
 
     const stats = calculateStats(allPoints, START_DATE_STR, TOTAL_TRAIL_MILES, { filterOffTrail: true });
-
-    if (env.TRAIL_HISTORY && kmlPoints.length > 0 && ctx) {
-      ctx.waitUntil(
-        storePointsByDay(kmlPoints, env).catch(err => {
-          console.error('[Worker] Failed to store points:', err);
-        })
-      );
-    } else if (env.TRAIL_HISTORY && kmlPoints.length > 0) {
-      storePointsByDay(kmlPoints, env).catch(err => {
-        console.error('[Worker] Failed to store points:', err);
-      });
-    }
 
     let weather = null;
     let location = null;
@@ -122,9 +98,10 @@ export async function handleSync(request, env) {
   }
 
   try {
-    const kmlUrl = buildKmlUrl(MAPSHARE_ID, MAPSHARE_PASSWORD);
+    const kmlUrl = buildKmlUrl(MAPSHARE_ID);
+    const kmlFetchOptions = buildKmlFetchOptions(MAPSHARE_PASSWORD);
 
-    const kmlResponse = await fetch(kmlUrl);
+    const kmlResponse = await fetch(kmlUrl, kmlFetchOptions);
     if (!kmlResponse.ok) throw new Error('Failed to fetch KML');
     const kmlText = await kmlResponse.text();
 

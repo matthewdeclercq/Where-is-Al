@@ -606,8 +606,44 @@ main > p:first-of-type {
 }
 
 .legend-milestone-icon {
-    color: #5a3a1f;
+    color: #a78bfa;
     font-size: 0.9rem;
+}
+
+.legend-divider {
+    width: 1px;
+    height: 1.2rem;
+    background: var(--earth-brown-light);
+    flex-shrink: 0;
+}
+
+.tracker-status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #888;
+}
+
+.tracker-status-dot.tracker-on {
+    background: #22c55e;
+    animation: pulse-green 2s ease-in-out infinite;
+}
+
+.tracker-status-dot.tracker-off {
+    background: #ef4444;
+    animation: pulse-red 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+    50% { box-shadow: 0 0 8px 4px rgba(34, 197, 94, 0.3); }
+}
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    50% { box-shadow: 0 0 8px 4px rgba(239, 68, 68, 0.3); }
 }
 
 .map-container {
