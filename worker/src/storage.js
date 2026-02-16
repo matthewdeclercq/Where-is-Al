@@ -1,4 +1,24 @@
 import { getUTCDateString, groupPointsByDate } from './utils.js';
+import { haversine } from './geo.js';
+
+const STATIONARY_THRESHOLD_MILES = 100 / 5280; // 100 feet in miles
+
+// Collapse consecutive points that are within 100 feet of each other.
+// Keeps the first point of each stationary cluster.
+function deduplicateStationary(points) {
+  if (points.length <= 1) return points;
+
+  const result = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const prev = result[result.length - 1];
+    const curr = points[i];
+    const dist = haversine(prev.lat, prev.lon, curr.lat, curr.lon);
+    if (dist >= STATIONARY_THRESHOLD_MILES) {
+      result.push(curr);
+    }
+  }
+  return result;
+}
 
 // Load all historical points from KV
 export async function loadHistoricalPoints(startDateStr, env) {
@@ -28,9 +48,10 @@ export async function loadHistoricalPoints(startDateStr, env) {
       }
     }
 
-    return allPoints
+    const sorted = allPoints
       .filter(p => p.time >= startDate)
       .sort((a, b) => a.time - b.time);
+    return deduplicateStationary(sorted);
   } catch (error) {
     console.error('[Worker] Failed to load historical points:', error);
     return [];
