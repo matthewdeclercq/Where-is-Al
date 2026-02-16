@@ -8,9 +8,7 @@
      * @returns {boolean} True if mobile device
      */
     function isMobile() {
-        return (typeof Utils !== 'undefined' && Utils.isMobile) 
-            ? Utils.isMobile() 
-            : window.innerWidth <= 480;
+        return Utils.isMobile();
     }
 
     /**

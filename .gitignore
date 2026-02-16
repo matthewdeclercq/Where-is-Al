@@ -42,3 +42,10 @@ npm-debug.log*
 # Optional eslint cache
 .eslintcache
 
+# Dependencies
+node_modules/
+
+# Wrangler
+.dev.vars
+.wrangler/
+

@@ -3,16 +3,9 @@
     'use strict';
 
     // Configuration
-    // Utils is loaded before this script, so getConfig should always be available
-    const getConfigValue = (path, defaultValue) => {
-        return (typeof Utils !== 'undefined' && Utils.getConfig) 
-            ? Utils.getConfig(path, defaultValue)
-            : defaultValue;
-    };
-    
     const WeatherConfig = {
-        workerUrl: getConfigValue('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
-        refreshInterval: getConfigValue('refreshIntervals.weather', 3600000),
+        workerUrl: Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
+        refreshInterval: Utils.getConfig('refreshIntervals.weather', 3600000),
         enableAutoRefresh: true
     };
 
@@ -52,31 +45,15 @@
      */
     function getWindDirection(degrees) {
         const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-        const index = Math.round(degrees / 22.5) % 16;
+        const index = ((Math.round(degrees / 22.5) % 16) + 16) % 16;
         return directions[index];
     }
 
     /**
      * Format date for display (uses shared DateUtils)
-     * DateUtils is loaded before this script, so it should always be available
      */
     function formatDate(dateString) {
-        // DateUtils is loaded before this script, but keep fallback for safety
-        if (window.DateUtils && window.DateUtils.formatDate) {
-            return window.DateUtils.formatDate(dateString, false); // Use local time for weather
-        }
-        // Fallback if DateUtils not available (shouldn't happen in production)
-        const date = new Date(dateString);
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        if (date.toDateString() === today.toDateString()) {
-            return 'Today';
-        } else if (date.toDateString() === tomorrow.toDateString()) {
-            return 'Tomorrow';
-        } else {
-            return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        }
+        return window.DateUtils.formatDate(dateString, false); // Use local time for weather
     }
 
     /**
@@ -121,20 +98,13 @@
 
     /**
      * Create point styling arrays based on labels (highlight "Today")
-     * Uses shared ChartUtils if available
      */
     function createPointStyling(labels, baseRadius, todayRadius) {
-        if (typeof ChartUtils !== 'undefined' && ChartUtils.createPointStyling) {
-            return ChartUtils.createPointStyling(labels, 'Today', baseRadius, todayRadius);
-        }
-        return labels.map(label => label === 'Today' ? todayRadius : baseRadius);
+        return ChartUtils.createPointStyling(labels, 'Today', baseRadius, todayRadius);
     }
 
     function createPointBorderStyling(labels, baseBorder, todayBorder) {
-        if (typeof ChartUtils !== 'undefined' && ChartUtils.createPointBorderStyling) {
-            return ChartUtils.createPointBorderStyling(labels, 'Today', baseBorder, todayBorder);
-        }
-        return labels.map(label => label === 'Today' ? todayBorder : baseBorder);
+        return ChartUtils.createPointBorderStyling(labels, 'Today', baseBorder, todayBorder);
     }
 
     /**
@@ -162,89 +132,23 @@
      * Create chart options configuration (uses shared ChartUtils)
      */
     function createChartOptions(labels, yAxisMin, yAxisMax) {
-        if (typeof ChartUtils !== 'undefined' && ChartUtils.createBaseChartOptions) {
-            return ChartUtils.createBaseChartOptions({
-                aspectRatio: 3.2,
-                aspectRatioMobile: 1.8,
-                showLegend: true,
-                tooltipLabelCallback: function(context) {
-                    return `${context.dataset.label}: ${context.parsed.y}°F`;
-                },
-                labels: labels,
-                yAxisMin: yAxisMin,
-                yAxisMax: yAxisMax,
-                yAxisCallback: function(value) {
-                    return value + '°F';
-                },
-                xAxisOptions: {
-                    showGrid: false
-                }
-            });
-        }
-        
-        // Fallback if ChartUtils not available
-        const isMobile = (typeof Utils !== 'undefined' && Utils.isMobile) ? Utils.isMobile() : window.innerWidth <= 480;
-        const aspectRatio = isMobile ? 1.8 : 3.2;
-        return {
-            responsive: true,
-            maintainAspectRatio: true,
-            aspectRatio: aspectRatio,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    onClick: null,
-                    labels: {
-                        usePointStyle: true,
-                        padding: isMobile ? 10 : 15,
-                        font: { family: "'Cabin', sans-serif", size: isMobile ? 12 : 14, weight: 600 },
-                        color: 'var(--text-dark)'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(30, 58, 15, 0.9)',
-                    padding: 12,
-                    titleFont: { family: "'Cabin', sans-serif", size: 14, weight: 600 },
-                    bodyFont: { family: "'Cabin', sans-serif", size: 13 },
-                    borderColor: 'var(--earth-brown)',
-                    borderWidth: 2,
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.dataset.label}: ${context.parsed.y}°F`;
-                        }
-                    }
-                }
+        return ChartUtils.createBaseChartOptions({
+            aspectRatio: 3.2,
+            aspectRatioMobile: 1.8,
+            showLegend: true,
+            tooltipLabelCallback: function(context) {
+                return `${context.dataset.label}: ${context.parsed.y}°F`;
             },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: {
-                        font: function(context) {
-                            const label = labels[context.index];
-                            return { family: "'Cabin', sans-serif", size: isMobile ? 10 : 12, weight: label === 'Today' ? 700 : 600 };
-                        },
-                        color: function(context) {
-                            const label = labels[context.index];
-                            return label === 'Today' ? '#1e3a0f' : 'var(--earth-brown-dark)';
-                        },
-                        padding: isMobile ? 5 : 10
-                    }
-                },
-                y: {
-                    beginAtZero: false,
-                    min: yAxisMin,
-                    max: yAxisMax,
-                    grid: { color: 'rgba(139, 111, 71, 0.2)', lineWidth: 1 },
-                    ticks: {
-                        font: { family: "'Cabin', sans-serif", size: isMobile ? 10 : 12 },
-                        color: 'var(--text-dark)',
-                        callback: function(value) { return value + '°F'; },
-                        padding: isMobile ? 5 : 10
-                    }
-                }
+            labels: labels,
+            yAxisMin: yAxisMin,
+            yAxisMax: yAxisMax,
+            yAxisCallback: function(value) {
+                return value + '°F';
             },
-            interaction: { intersect: false, mode: 'index' }
-        };
+            xAxisOptions: {
+                showGrid: false
+            }
+        });
     }
 
     /**
@@ -301,8 +205,9 @@
         const minTemp = Math.min(...allTemps);
         const maxTemp = Math.max(...allTemps);
         const tempRange = maxTemp - minTemp;
-        const yAxisMin = Math.floor(minTemp - tempRange * 0.1);
-        const yAxisMax = Math.ceil(maxTemp + tempRange * 0.1);
+        const padding = tempRange === 0 ? 2 : tempRange * 0.1;
+        const yAxisMin = Math.floor(minTemp - padding);
+        const yAxisMax = Math.ceil(maxTemp + padding);
 
         // Clean up any existing icons
         const chartContainer = canvas.parentElement;
@@ -376,7 +281,7 @@
         // Update existing chart or create new one
         if (weatherChart) {
             // Recalculate mobile state for update
-            const isMobile = (typeof Utils !== 'undefined' && Utils.isMobile) ? Utils.isMobile() : window.innerWidth <= 480;
+            const isMobile = Utils.isMobile();
             
             // Update existing chart
             weatherChart.data.labels = labels;
@@ -588,7 +493,7 @@
     function updateChartForScreenSize() {
         if (!weatherChart) return;
 
-        const isMobile = (typeof Utils !== 'undefined' && Utils.isMobile) ? Utils.isMobile() : window.innerWidth <= 480;
+        const isMobile = Utils.isMobile();
         const labels = weatherChart.data.labels || [];
 
         // Update chart options based on screen size
@@ -614,21 +519,7 @@
     /**
      * Handle window resize with debouncing
      */
-    const handleResize = (typeof Utils !== 'undefined' && Utils.debounce)
-        ? Utils.debounce(updateChartForScreenSize, 200)
-        : (function() {
-            // Fallback debounce implementation
-            let resizeTimeoutId = null;
-            return function() {
-                if (resizeTimeoutId) {
-                    clearTimeout(resizeTimeoutId);
-                }
-                resizeTimeoutId = setTimeout(function() {
-                    updateChartForScreenSize();
-                    resizeTimeoutId = null;
-                }, 200);
-            };
-        })();
+    const handleResize = Utils.debounce(updateChartForScreenSize, 200);
 
     /**
      * Register resize handler
@@ -648,21 +539,14 @@
      * Register visibility change handler
      */
     function registerVisibilityHandler() {
-        if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
-            Utils.VisibilityManager.register(handleVisibilityChange);
-        } else {
-            // Fallback to direct listener if Utils or VisibilityManager not available
-            document.addEventListener('visibilitychange', handleVisibilityChange);
-        }
+        Utils.VisibilityManager.register(handleVisibilityChange);
     }
 
     /**
      * Unregister visibility change handler
      */
     function unregisterVisibilityHandler() {
-        if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
-            Utils.VisibilityManager.unregister(handleVisibilityChange);
-        }
+        Utils.VisibilityManager.unregister(handleVisibilityChange);
     }
 
     /**
@@ -710,25 +594,11 @@
             return;
         }
         
-        (function init() {
-            if (typeof Utils !== 'undefined' && Utils.ready) {
-                Utils.ready(function() {
-                    initializeWeather();
-                    registerVisibilityHandler();
-                    registerResizeHandler();
-                });
-            } else if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
-                    initializeWeather();
-                    registerVisibilityHandler();
-                    registerResizeHandler();
-                });
-            } else {
-                initializeWeather();
-                registerVisibilityHandler();
-                registerResizeHandler();
-            }
-        })();
+        Utils.ready(function() {
+            initializeWeather();
+            registerVisibilityHandler();
+            registerResizeHandler();
+        });
     }
     
     checkAndInitialize();

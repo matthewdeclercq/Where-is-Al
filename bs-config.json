@@ -1,0 +1,8 @@
+{
+  "port": 3000,
+  "open": false,
+  "files": ["*.html", "css/**/*.css", "js/**/*.js", "log-entries/**/*.html"],
+  "server": {
+    "baseDir": "./"
+  }
+}

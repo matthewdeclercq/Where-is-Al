@@ -3,16 +3,9 @@
     'use strict';
 
     // Configuration
-    // Utils is loaded before this script, so getConfig should always be available
-    const getConfigValue = (path, defaultValue) => {
-        return (typeof Utils !== 'undefined' && Utils.getConfig) 
-            ? Utils.getConfig(path, defaultValue)
-            : defaultValue;
-    };
-    
     const ElevationConfig = {
-        workerUrl: getConfigValue('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
-        refreshInterval: getConfigValue('refreshIntervals.elevation', 3600000),
+        workerUrl: Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
+        refreshInterval: Utils.getConfig('refreshIntervals.elevation', 3600000),
         enableAutoRefresh: true
     };
 
@@ -30,35 +23,16 @@
 
     /**
      * Format date for display (uses shared DateUtils)
-     * DateUtils is loaded before this script, so it should always be available
      */
     function formatDate(dateString) {
-        // DateUtils is loaded before this script, but keep fallback for safety
-        if (window.DateUtils && window.DateUtils.formatDate) {
-            return window.DateUtils.formatDate(dateString, true); // Use UTC
-        }
-        // Fallback if DateUtils not available (shouldn't happen in production)
-        const date = new Date(dateString + 'T00:00:00Z');
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
-        if (dateString === todayStr) {
-            return 'Today';
-        }
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return window.DateUtils.formatDate(dateString, true); // Use UTC
     }
 
     /**
      * Format time for chart labels (uses shared DateUtils)
-     * DateUtils is loaded before this script, so it should always be available
      */
     function formatTime(timeString) {
-        // DateUtils is loaded before this script, but keep fallback for safety
-        if (window.DateUtils && window.DateUtils.formatTime) {
-            return window.DateUtils.formatTime(timeString);
-        }
-        // Fallback if DateUtils not available (shouldn't happen in production)
-        const date = new Date(timeString);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        return window.DateUtils.formatTime(timeString);
     }
 
     /**
@@ -332,77 +306,24 @@
      * Create chart options configuration (uses shared ChartUtils)
      */
     function createChartOptions(labels, yAxisMin, yAxisMax) {
-        if (typeof ChartUtils !== 'undefined' && ChartUtils.createBaseChartOptions) {
-            return ChartUtils.createBaseChartOptions({
-                aspectRatio: 4.0,
-                aspectRatioMobile: 2.5,
-                showLegend: false,
-                tooltipLabelCallback: function(context) {
-                    return `Elevation: ${context.parsed.y.toLocaleString()} ft`;
-                },
-                labels: labels,
-                yAxisMin: yAxisMin,
-                yAxisMax: yAxisMax,
-                yAxisCallback: function(value) {
-                    return value.toLocaleString() + ' ft';
-                },
-                xAxisOptions: {
-                    showGrid: true,
-                    maxRotation: 45
-                }
-            });
-        }
-        
-        // Fallback if ChartUtils not available
-        const isMobile = (typeof Utils !== 'undefined' && Utils.isMobile) ? Utils.isMobile() : window.innerWidth <= 480;
-        const aspectRatio = isMobile ? 2.5 : 4.0;
-        return {
-            responsive: true,
-            maintainAspectRatio: true,
-            aspectRatio: aspectRatio,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(30, 58, 15, 0.9)',
-                    padding: 12,
-                    titleFont: { family: "'Cabin', sans-serif", size: 14, weight: 600 },
-                    bodyFont: { family: "'Cabin', sans-serif", size: 13 },
-                    borderColor: 'var(--earth-brown)',
-                    borderWidth: 2,
-                    callbacks: {
-                        label: function(context) {
-                            return `Elevation: ${context.parsed.y.toLocaleString()} ft`;
-                        }
-                    }
-                }
+        return ChartUtils.createBaseChartOptions({
+            aspectRatio: 4.0,
+            aspectRatioMobile: 2.5,
+            showLegend: false,
+            tooltipLabelCallback: function(context) {
+                return `Elevation: ${context.parsed.y.toLocaleString()} ft`;
             },
-            scales: {
-                x: {
-                    grid: { display: true, color: 'rgba(139, 111, 71, 0.1)' },
-                    ticks: {
-                        font: { family: "'Cabin', sans-serif", size: isMobile ? 10 : 12, weight: 500 },
-                        color: 'var(--text-dark)',
-                        maxRotation: isMobile ? 45 : 0,
-                        padding: isMobile ? 5 : 10
-                    }
-                },
-                y: {
-                    beginAtZero: false,
-                    min: yAxisMin,
-                    max: yAxisMax,
-                    grid: { color: 'rgba(139, 111, 71, 0.2)', lineWidth: 1 },
-                    ticks: {
-                        font: { family: "'Cabin', sans-serif", size: isMobile ? 10 : 12 },
-                        color: 'var(--text-dark)',
-                        callback: function(value) {
-                            return value.toLocaleString() + ' ft';
-                        },
-                        padding: isMobile ? 5 : 10
-                    }
-                }
+            labels: labels,
+            yAxisMin: yAxisMin,
+            yAxisMax: yAxisMax,
+            yAxisCallback: function(value) {
+                return value.toLocaleString() + ' ft';
             },
-            interaction: { intersect: false, mode: 'index' }
-        };
+            xAxisOptions: {
+                showGrid: true,
+                maxRotation: 45
+            }
+        });
     }
 
     /**
@@ -471,8 +392,9 @@
         const minElevation = Math.min(...elevations);
         const maxElevation = Math.max(...elevations);
         const elevationRange = maxElevation - minElevation;
-        const yAxisMin = Math.floor(minElevation - elevationRange * 0.1);
-        const yAxisMax = Math.ceil(maxElevation + elevationRange * 0.1);
+        const padding = elevationRange === 0 ? 5 : elevationRange * 0.1;
+        const yAxisMin = Math.floor(minElevation - padding);
+        const yAxisMax = Math.ceil(maxElevation + padding);
 
         // Destroy existing chart if it exists
         if (state.chart) {
@@ -547,27 +469,10 @@
     }
 
     // Initialize when DOM is ready
-    (function init() {
-        if (typeof Utils !== 'undefined' && Utils.ready) {
-            Utils.ready(initializeElevation);
-        } else if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeElevation);
-        } else {
-            initializeElevation();
-        }
-    })();
+    Utils.ready(initializeElevation);
 
     // Handle window resize with standardized debouncing
-    const debouncedHandleResize = (typeof Utils !== 'undefined' && Utils.debounce)
-        ? Utils.debounce(handleResize, 200)
-        : (function() {
-            // Fallback debounce implementation
-            let resizeTimeout = null;
-            return function() {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(handleResize, 200);
-            };
-        })();
+    const debouncedHandleResize = Utils.debounce(handleResize, 200);
     
     window.addEventListener('resize', debouncedHandleResize);
 })();

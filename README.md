@@ -1,46 +1,76 @@
 # Where Is Al
 
-A simple website for tracking Al's Appalachian Trail thru-hike adventure.
+A website for tracking Al's Appalachian Trail thru-hike adventure. Deployed at [whereisal.com](https://whereisal.com).
 
 ## Features
 
-- Password-protected access
+- Password-protected access (server-side authentication via Cloudflare Worker)
 - Live map (Garmin inReach MapShare integration)
-- Trail statistics dashboard
+- Trail statistics dashboard (miles completed, daily distance, pace, estimated finish)
+- Weather forecast at Al's current location
+- Elevation profile by day
 - Captain's Log with dispatches from the trail
 - Responsive design
+
+## Architecture
+
+- **Frontend:** Vanilla JavaScript (no build step), deployed to GitHub Pages
+- **Backend:** Cloudflare Worker that handles authentication and aggregates data from Garmin inReach, weather APIs, and KV storage
 
 ## File Structure
 
 ```
 Where-is-Al/
-├── index.html          # Password gate entry point
-├── main.html           # Main content page
+├── index.html              # Password gate entry point
+├── main.html               # Main content page (protected)
 ├── css/
-│   └── style.css      # Main stylesheet
+│   └── style.css           # Main stylesheet
 ├── js/
-│   ├── utils.js       # Storage utilities & DOM ready helper
-│   ├── password.js    # Password validation
-│   ├── map.js         # Map initialization (includes config)
-│   └── log-loader.js  # Loads log entries from manifest
+│   ├── utils.js            # Shared utilities (DOM ready, config, VisibilityManager)
+│   ├── config.js           # Centralized configuration
+│   ├── api-client.js       # API client with auth, dedup, backoff
+│   ├── date-utils.js       # Date formatting utilities
+│   ├── chart-utils.js      # Chart.js configuration helpers
+│   ├── password.js          # Login page password validation
+│   ├── stats.js            # Trail statistics module
+│   ├── weather.js          # Weather display module
+│   ├── elevation.js        # Elevation profile module
+│   ├── map.js              # Garmin MapShare integration
+│   └── log-loader.js       # Loads log entries from manifest
 ├── log-entries/
-│   ├── manifest.json  # List of log entry filenames
-│   └── *.html         # Individual log entry files
-├── assets/            # Images and media
-├── .nojekyll          # GitHub Pages configuration
-├── CNAME              # Custom domain configuration
-└── README.md
+│   ├── manifest.json       # List of log entry filenames
+│   └── *.html              # Individual log entry files
+├── assets/                 # Images and media
+├── worker/                 # Cloudflare Worker backend
+│   ├── src/                # Worker ES modules
+│   ├── wrangler.toml       # Worker configuration
+│   └── package.json        # Worker dependencies
+├── .nojekyll               # GitHub Pages configuration
+├── CNAME                   # Custom domain (whereisal.com)
+└── CLAUDE.md               # AI assistant instructions
 ```
 
-## Setup
+## Development
 
-### Enable Garmin Map
+### Local Setup
 
-1. Get your Garmin MapShare URL from [explore.garmin.com](https://explore.garmin.com)
-2. Open `js/map.js` and set `mapShareUrl` in the `MapConfig` object:
-   ```javascript
-   mapShareUrl: "https://share.garmin.com/YourMapShareName"
-   ```
+```bash
+npm install
+cd worker && npm install
+cp worker/.dev.vars.example worker/.dev.vars  # Fill in values
+npm run dev                                    # Frontend on :3000, worker on :8788
+```
+
+### Commands
+
+```bash
+npm run dev              # Run both frontend and worker locally
+npm run dev:frontend     # Frontend only (lite-server on :3000)
+npm run dev:worker       # Worker only (wrangler dev on :8788)
+npm run deploy:worker    # Deploy worker to Cloudflare
+```
+
+`js/config.js` auto-detects `localhost` and points API calls to the local worker.
 
 ### Add Log Entries
 
@@ -60,18 +90,23 @@ Where-is-Al/
        </div>
    </div>
    ```
-3. Add the filename to `log-entries/manifest.json`:
-   ```json
-   [
-     "2024-05-01.html",
-     ...
-   ]
-   ```
+3. Add the filename to `log-entries/manifest.json` (newest first)
 
 ### Change Password
 
-Edit `PASSWORD` in `js/password.js`:
-```javascript
-const PASSWORD = 'your-password';
+Password validation is server-side in the Cloudflare Worker:
+```bash
+cd worker && npx wrangler secret put SITE_PASSWORD
 ```
 
+### Configure Garmin MapShare
+
+Edit `js/map.js` and set `mapShareUrl`:
+```javascript
+mapShareUrl: "https://share.garmin.com/YourMapShareName"
+```
+
+## Deployment
+
+- **Frontend:** Auto-deploys to GitHub Pages from the `main` branch. No build step.
+- **Worker:** Deploy with `npm run deploy:worker` (requires `npx wrangler login`).

@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Springer Mountain",
+    "description": "Southern Terminus. The official start, with a plaque and register.",
+    "state": "Georgia",
+    "lat": 34.6267,
+    "lon": -84.1936
+  },
+  {
+    "name": "Blood Mountain",
+    "description": "Georgia's highest A.T. point (4,458 ft) with a historic CCC stone shelter and panoramic views.",
+    "state": "Georgia",
+    "lat": 34.7400,
+    "lon": -83.9370
+  },
+  {
+    "name": "Neels Gap",
+    "description": "Mountain Crossings outfitter (the only building the trail passes through) for early resupply.",
+    "state": "Georgia",
+    "lat": 34.7240,
+    "lon": -83.9170
+  },
+  {
+    "name": "Fontana Dam",
+    "description": "Tallest dam east of the Rockies. Entering the Smokies.",
+    "state": "North Carolina",
+    "lat": 35.4430,
+    "lon": -83.8050
+  },
+  {
+    "name": "Clingmans Dome",
+    "description": "Highest point on the entire A.T. (6,643 ft) with an observation tower.",
+    "state": "Tennessee / North Carolina",
+    "lat": 35.5629,
+    "lon": -83.4984
+  },
+  {
+    "name": "Charlie's Bunion",
+    "description": "Dramatic rocky outcrop with stunning views.",
+    "state": "Tennessee / North Carolina",
+    "lat": 35.6390,
+    "lon": -83.3810
+  },
+  {
+    "name": "Max Patch",
+    "description": "Iconic open bald with sweeping mountain views.",
+    "state": "North Carolina",
+    "lat": 35.7970,
+    "lon": -82.9620
+  },
+  {
+    "name": "Roan Highlands",
+    "description": "Grassy balds (Round Bald, Jane Bald, Grassy Ridge) with 360-degree vistas.",
+    "state": "Tennessee / North Carolina",
+    "lat": 36.1060,
+    "lon": -82.1100
+  },
+  {
+    "name": "Grayson Highlands",
+    "description": "Wild ponies, open balds, and Mount Rogers (highest in VA).",
+    "state": "Virginia",
+    "lat": 36.6570,
+    "lon": -81.5450
+  },
+  {
+    "name": "McAfee Knob",
+    "description": "The most photographed spot on the A.T., with a dramatic cliff ledge overlook.",
+    "state": "Virginia",
+    "lat": 37.3790,
+    "lon": -80.0890
+  },
+  {
+    "name": "Dragon's Tooth",
+    "description": "Rugged rock formations and views (part of the Virginia Triple Crown).",
+    "state": "Virginia",
+    "lat": 37.3780,
+    "lon": -80.1560
+  },
+  {
+    "name": "Tinker Cliffs",
+    "description": "Rugged rock formations and views (part of the Virginia Triple Crown).",
+    "state": "Virginia",
+    "lat": 37.4200,
+    "lon": -79.9900
+  },
+  {
+    "name": "Harpers Ferry",
+    "description": "Psychological halfway point (~1,014 miles) and ATC headquarters.",
+    "state": "West Virginia",
+    "lat": 39.3240,
+    "lon": -77.7390
+  },
+  {
+    "name": "Pine Grove Furnace",
+    "description": "Official halfway marker (varies slightly yearly).",
+    "state": "Pennsylvania",
+    "lat": 40.0330,
+    "lon": -77.3060
+  },
+  {
+    "name": "Bear Mountain Bridge",
+    "description": "Lowest elevation on the trail (124 ft) crossing the Hudson River.",
+    "state": "New York",
+    "lat": 41.3190,
+    "lon": -73.9840
+  },
+  {
+    "name": "Mount Greylock",
+    "description": "Massachusetts' highest point (3,491 ft) with a war memorial tower and views of five states.",
+    "state": "Massachusetts",
+    "lat": 42.6370,
+    "lon": -73.1660
+  },
+  {
+    "name": "Mount Moosilauke",
+    "description": "White Mountains begin - first big alpine climb for NOBOs.",
+    "state": "New Hampshire",
+    "lat": 44.0240,
+    "lon": -71.6810
+  },
+  {
+    "name": "Mount Washington",
+    "description": "Highest in the Northeast outside Maine; Presidential Range with exposed ridges.",
+    "state": "New Hampshire",
+    "lat": 44.2706,
+    "lon": -71.3033
+  },
+  {
+    "name": "Mahoosuc Notch",
+    "description": "\"The hardest mile\" with boulder scrambling.",
+    "state": "Maine",
+    "lat": 44.5580,
+    "lon": -70.9990
+  },
+  {
+    "name": "Mount Katahdin",
+    "description": "Northern Terminus. The iconic wooden sign marking the end, with a challenging boulder climb.",
+    "state": "Maine",
+    "lat": 45.9045,
+    "lon": -68.9214
+  }
+]

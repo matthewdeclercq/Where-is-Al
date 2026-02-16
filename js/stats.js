@@ -3,16 +3,9 @@
     'use strict';
 
     // Configuration
-    // Utils is loaded before this script, so getConfig should always be available
-    const getConfigValue = (path, defaultValue) => {
-        return (typeof Utils !== 'undefined' && Utils.getConfig) 
-            ? Utils.getConfig(path, defaultValue)
-            : defaultValue;
-    };
-    
     const StatsConfig = {
-        workerUrl: getConfigValue('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
-        refreshInterval: getConfigValue('refreshIntervals.stats', 3600000),
+        workerUrl: Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
+        refreshInterval: Utils.getConfig('refreshIntervals.stats', 3600000),
         enableAutoRefresh: true
     };
 
@@ -179,30 +172,14 @@
      */
     function cleanup() {
         window.ApiClient.cleanup(state);
-        // Unregister visibility handler if Utils is available
-        if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
-            Utils.VisibilityManager.unregister(handleVisibilityChange);
-        }
+        Utils.VisibilityManager.unregister(handleVisibilityChange);
     }
 
     // Initialize when DOM is ready
-    (function init() {
-        if (typeof Utils !== 'undefined' && Utils.ready) {
-            Utils.ready(initializeStats);
-        } else if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeStats);
-        } else {
-            initializeStats();
-        }
-    })();
+    Utils.ready(initializeStats);
 
-    // Register visibility change handler with shared manager if available
-    if (typeof Utils !== 'undefined' && Utils.VisibilityManager) {
-        Utils.VisibilityManager.register(handleVisibilityChange);
-    } else {
-        // Fallback to direct listener only if Utils is not available
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-    }
+    // Register visibility change handler
+    Utils.VisibilityManager.register(handleVisibilityChange);
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', cleanup);

@@ -1,0 +1,16 @@
+{
+  "name": "where-is-al",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Track a thru-hiker's progress on the Appalachian Trail",
+  "scripts": {
+    "dev": "concurrently --names frontend,worker --prefix-colors blue,green \"npm run dev:frontend\" \"npm run dev:worker\"",
+    "dev:frontend": "lite-server",
+    "dev:worker": "cd worker && npx wrangler dev",
+    "deploy:worker": "cd worker && npx wrangler deploy"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "lite-server": "^2.6.1"
+  }
+}

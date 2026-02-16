@@ -1,0 +1,28 @@
+name = "where-is-al"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[dev]
+port = 8788
+
+# KV Namespace binding
+# Get your namespace ID with: npx wrangler kv namespace list
+# Then uncomment and fill in below:
+# [[kv_namespaces]]
+# binding = "TRAIL_HISTORY"
+# id = "your-kv-namespace-id-here"
+
+# Environment variables are set via:
+#   - Secrets (recommended for passwords): npx wrangler secret put SITE_PASSWORD
+#   - .dev.vars file for local development (see .dev.vars.example)
+#
+# Required env vars:
+#   MAPSHARE_ID      - Garmin MapShare ID
+#   START_DATE       - Trail start date (YYYY-MM-DD)
+#   START_LAT        - Starting latitude
+#   START_LON        - Starting longitude
+#   SITE_PASSWORD    - Password for site access (use wrangler secret put)
+#
+# Optional env vars:
+#   MAPSHARE_PASSWORD - MapShare password if set
+#   USE_MOCK_DATA     - Set to "true" for demo/dev mode

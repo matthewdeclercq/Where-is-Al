@@ -33,8 +33,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
     <header class="site-header">
@@ -46,9 +48,16 @@
         <!-- Live Map Section -->
         <section class="map-section" aria-label="Live trail map">
             <h2 class="section-title">Live Trail Map</h2>
+            <div class="map-legend">
+                <span class="legend-item"><span class="legend-line legend-trail"></span> AT Trail</span>
+                <span class="legend-item"><span class="legend-dot legend-on-trail"></span> On Trail</span>
+                <span class="legend-item"><span class="legend-dot legend-off-trail"></span> Off Trail</span>
+                <span class="legend-item"><span class="legend-dot legend-current"></span> Current</span>
+                <span class="legend-item"><span class="legend-line legend-route"></span> Route</span>
+                <span class="legend-item"><i class="fas fa-mountain legend-milestone-icon"></i> Milestone</span>
+            </div>
             <div class="map-container">
-                <!-- Map will be initialized by js/map.js -->
-                <!-- Set mapShareUrl in js/map.js to enable the Garmin MapShare map -->
+                <div id="leaflet-map"></div>
             </div>
         </section>
 

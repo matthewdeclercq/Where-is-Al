@@ -2,10 +2,16 @@
 (function() {
     'use strict';
 
+    // Auto-detect local development
+    const isLocalDev = window.location.hostname === 'localhost'
+                    || window.location.hostname === '127.0.0.1';
+
     // Worker API Configuration
     const Config = {
-        // Cloudflare Worker URL
-        workerUrl: 'https://where-is-al.matthew-declercq.workers.dev/',
+        // Cloudflare Worker URL (auto-switches to local wrangler dev server)
+        workerUrl: isLocalDev
+            ? 'http://localhost:8788/'
+            : 'https://where-is-al.matthew-declercq.workers.dev/',
         
         // Refresh intervals (in milliseconds)
         refreshIntervals: {
