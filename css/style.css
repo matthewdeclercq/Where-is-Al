@@ -760,10 +760,13 @@ main > p:first-of-type {
     border: none;
     border-bottom: 2px solid var(--earth-brown-light);
     margin: 0;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .map-fullscreen .leaflet-top {
-    top: 45px;
+    top: 55px;
 }
 
 .map-fullscreen .map-container {
