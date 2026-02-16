@@ -43,7 +43,9 @@ export async function handlePoints(request, env) {
       lon: p.lon,
       time: p.time instanceof Date ? p.time.toISOString() : p.time,
       elevation: p.elevation !== undefined ? p.elevation : null,
-      onTrail: p.onTrail
+      onTrail: p.onTrail,
+      lastPingTime: p.lastPingTime ? (p.lastPingTime instanceof Date ? p.lastPingTime.toISOString() : p.lastPingTime) : undefined,
+      stationaryPings: p.stationaryPings > 1 ? p.stationaryPings : undefined
     }));
 
     return createSuccessResponse({

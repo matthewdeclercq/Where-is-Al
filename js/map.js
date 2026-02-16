@@ -221,6 +221,26 @@
         }, state);
     }
 
+    function formatIdleInfo(point) {
+        if (!point.lastPingTime || !point.time) return '';
+        var first = new Date(point.time);
+        var last = new Date(point.lastPingTime);
+        var diffMs = last - first;
+        if (diffMs <= 0) return '';
+
+        var hours = Math.floor(diffMs / 3600000);
+        var mins = Math.floor((diffMs % 3600000) / 60000);
+        var durationStr = hours > 0 ? hours + 'h ' + mins + 'm' : mins + 'm';
+
+        return '<div class="popup-idle">' +
+            '<div style="margin-top:4px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.15);">' +
+            '<div style="color: #facc15; font-weight: 600;">Idle ' + durationStr + '</div>' +
+            '<div>First ping: ' + first.toLocaleString() + '</div>' +
+            '<div>Last ping: ' + last.toLocaleString() + '</div>' +
+            '<div style="color: #999;">' + point.stationaryPings + ' pings from this spot</div>' +
+            '</div></div>';
+    }
+
     function renderPoints(points) {
         // Clear existing point layers
         if (pointsLayer) {
@@ -266,9 +286,10 @@
                 var popupContent = '<strong>' + positionLabel + '</strong>' +
                     '<div class="popup-time">' + timeStr + '</div>' +
                     '<div>Elevation: ' + elevStr + '</div>' +
-                    (isOnTrail ? '' : '<div style="color: #999; font-style: italic;">Off trail</div>');
+                    (isOnTrail ? '' : '<div style="color: #999; font-style: italic;">Off trail</div>') +
+                    formatIdleInfo(point);
 
-                currentMarker.bindPopup(popupContent, { maxWidth: 250 });
+                currentMarker.bindPopup(popupContent, { maxWidth: 280 });
                 currentMarker.addTo(map);
             } else {
                 // Regular point
@@ -291,8 +312,9 @@
                 marker.bindPopup(
                     '<div class="popup-time">' + timeStr + '</div>' +
                     '<div>Elevation: ' + elevStr + '</div>' +
-                    '<div style="color: ' + color + ';">' + statusStr + '</div>',
-                    { maxWidth: 200 }
+                    '<div style="color: ' + color + ';">' + statusStr + '</div>' +
+                    formatIdleInfo(point),
+                    { maxWidth: 250 }
                 );
 
                 marker.addTo(pointsLayer);
