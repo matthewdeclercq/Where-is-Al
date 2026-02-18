@@ -1,3 +1,5 @@
+import { MS_PER_DAY, DATE_REGEX } from './constants.js';
+
 // Helper function to get UTC date string (YYYY-MM-DD) from Date object or ISO string
 export function getUTCDateString(dateOrTime) {
   if (!dateOrTime) return null;
@@ -24,7 +26,6 @@ export function calculateCurrentDay(startDateStr) {
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const startDateUTC = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
-  const MS_PER_DAY = 86400000;
   const daysDiff = Math.floor((todayUTC - startDateUTC) / MS_PER_DAY);
   return { currentDay: Math.max(1, daysDiff + 1), todayUTC, startDate };
 }
@@ -57,8 +58,7 @@ export function validateEnvVars(env, requireMapshare = true) {
   if (!env.START_DATE) {
     errors.push('START_DATE environment variable not configured');
   } else {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(env.START_DATE)) {
+    if (!DATE_REGEX.test(env.START_DATE)) {
       errors.push('START_DATE must be in YYYY-MM-DD format');
     } else {
       const testDate = new Date(env.START_DATE + 'T00:00:00Z');

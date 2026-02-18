@@ -1,6 +1,6 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
 import { validateEnvVars } from './utils.js';
-import { loadHistoricalPoints } from './storage.js';
+import { loadHistoricalPoints, serializePoint } from './storage.js';
 import { tagPointsOnOffTrail } from './trail-proximity.js';
 import { AT_TRAIL_COORDS } from './at-trail-simplified.js';
 import { DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
@@ -11,9 +11,8 @@ export async function handlePoints(request, env) {
   const START_DATE_STR = env.START_DATE;
   const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
 
-  const thresholdMiles = env.OFF_TRAIL_THRESHOLD
-    ? parseFloat(env.OFF_TRAIL_THRESHOLD)
-    : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
+  const parsed = parseFloat(env.OFF_TRAIL_THRESHOLD);
+  const thresholdMiles = Number.isFinite(parsed) ? parsed : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
 
   if (USE_MOCK_DATA) {
     const mockPoints = generateMockPoints(START_DATE_STR, thresholdMiles);
@@ -41,13 +40,7 @@ export async function handlePoints(request, env) {
 
     // Serialize points for response
     const responsePoints = allPoints.map(p => ({
-      lat: p.lat,
-      lon: p.lon,
-      time: p.time instanceof Date ? p.time.toISOString() : p.time,
-      elevation: p.elevation !== undefined ? p.elevation : null,
-      onTrail: p.onTrail,
-      trailMile: p.trailMile !== undefined ? p.trailMile : null,
-      trailElevation: p.trailElevation !== undefined ? p.trailElevation : null,
+      ...serializePoint(p),
       lastPingTime: p.lastPingTime ? (p.lastPingTime instanceof Date ? p.lastPingTime.toISOString() : p.lastPingTime) : undefined,
       stationaryPings: p.stationaryPings > 1 ? p.stationaryPings : undefined
     }));

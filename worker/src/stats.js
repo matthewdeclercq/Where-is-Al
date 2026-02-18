@@ -65,7 +65,7 @@ function calculateDailyElevationGain(points) {
     }
 
     let dayElevationGain = 0;
-    const sortedDayPoints = pointsWithElevation.sort((a, b) => a.time - b.time);
+    const sortedDayPoints = pointsWithElevation.slice().sort((a, b) => a.time - b.time);
 
     for (let i = 1; i < sortedDayPoints.length; i++) {
       const prev = getElevation(sortedDayPoints[i - 1]);
@@ -110,7 +110,7 @@ function calculateDailyMileage(points) {
     } else {
       // Fallback: haversine sum (no correction factor)
       let dayMiles = 0;
-      const sortedDayPoints = dayPoints.sort((a, b) => a.time - b.time);
+      const sortedDayPoints = dayPoints.slice().sort((a, b) => a.time - b.time);
       for (let i = 1; i < sortedDayPoints.length; i++) {
         const prev = sortedDayPoints[i - 1];
         const curr = sortedDayPoints[i];

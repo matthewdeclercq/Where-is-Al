@@ -55,11 +55,18 @@ Each feature module (stats, weather, elevation, map) follows this pattern:
         window.ApiClient.handleVisibilityChange(fetchData, setupAutoRefresh, state);
     }
 
-    // 5. Initialize on DOM ready using Utils.ready()
+    // 5. Cleanup: clear interval, unregister visibility, destroy charts
+    function cleanup() {
+        window.ApiClient.cleanup(state);
+        Utils.VisibilityManager.unregister(handleVisibilityChange);
+    }
+
+    // 6. Initialize on DOM ready using Utils.ready()
     Utils.ready(initializeModule);
 
-    // 6. Register visibility handler with Utils.VisibilityManager
+    // 7. Register visibility handler and cleanup
     Utils.VisibilityManager.register(handleVisibilityChange);
+    window.addEventListener('beforeunload', cleanup);
 })();
 ```
 
@@ -114,7 +121,7 @@ await ApiClient.fetch(
 
 `js/config.js` exports `window.Config` with:
 - `workerUrl` - Cloudflare Worker endpoint
-- `refreshIntervals` - Refresh rates for stats, weather, map
+- `refreshIntervals` - Refresh rates for stats, weather, map, elevation
 - `backoff` - Exponential backoff parameters
 - `auth` - Max attempts, lockout time
 - `requestTimeout` - API timeout (30s default)
@@ -239,9 +246,9 @@ The Cloudflare Worker lives in `worker/` and is split into ES modules under `wor
 | `utils.js` | Date helpers, KML URL builder, env validation, `groupPointsByDate`, `calculateCurrentDay` |
 | `auth.js` | Token management and `/auth` handler |
 | `kml.js` | KML parser |
-| `geo.js` | Haversine distance |
+| `geo.js` | Haversine distance, segment projection (`projectToSegment`) |
 | `stats.js` | Trail statistics calculator (uses trail-mile deltas) |
-| `storage.js` | KV read/write, point merging |
+| `storage.js` | KV read/write, point serialization (`serializePoint`) |
 | `weather.js` | Open-Meteo weather API |
 | `elevation.js` | `/elevation` endpoint handlers (prefers DEM elevation) |
 | `handlers.js` | `/` and `/sync` endpoint handlers |

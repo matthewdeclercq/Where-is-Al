@@ -50,11 +50,6 @@
 
             // Prevent concurrent requests from same module
             if (state.isLoading) {
-                // Module is already loading, but no pending request for this URL
-                // Return resolved promise to avoid blocking
-                if (callbacks && callbacks.onError) {
-                    callbacks.onError(new Error('[ApiClient] Module is already loading'));
-                }
                 return Promise.resolve();
             }
 

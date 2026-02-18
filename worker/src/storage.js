@@ -3,6 +3,19 @@ import { haversine } from './geo.js';
 
 const STATIONARY_THRESHOLD_MILES = 100 / 5280; // 100 feet in miles
 
+// Serialize a point to its storable/transferable JSON shape with consistent null handling
+export function serializePoint(p) {
+  return {
+    lat: p.lat,
+    lon: p.lon,
+    time: p.time instanceof Date ? p.time.toISOString() : p.time,
+    elevation: p.elevation ?? null,
+    onTrail: p.onTrail ?? null,
+    trailMile: p.trailMile ?? null,
+    trailElevation: p.trailElevation ?? null
+  };
+}
+
 // Collapse consecutive points that are within 100 feet of each other.
 // Keeps the first point of each stationary cluster, annotated with
 // `lastPingTime` and `stationaryPings` when multiple pings came from the same spot.
@@ -100,16 +113,7 @@ export async function storePointsByDay(points, env) {
 
         const mergedPoints = Array.from(pointMap.values())
           .sort((a, b) => a.time - b.time)
-          .map(p => ({
-            lat: p.lat,
-            lon: p.lon,
-            time: p.time.toISOString(),
-            velocity: p.velocity,
-            elevation: p.elevation !== undefined ? p.elevation : null,
-            onTrail: p.onTrail !== undefined ? p.onTrail : null,
-            trailMile: p.trailMile !== undefined ? p.trailMile : null,
-            trailElevation: p.trailElevation !== undefined ? p.trailElevation : null
-          }));
+          .map(p => ({ ...serializePoint(p), velocity: p.velocity }));
 
         await env.TRAIL_HISTORY.put(kvKey, JSON.stringify(mergedPoints));
       } catch (error) {
@@ -124,21 +128,4 @@ export async function storePointsByDay(points, env) {
   } catch (error) {
     console.error('Failed to store points:', error);
   }
-}
-
-// Merge KML points with historical points, deduplicating by timestamp
-export function mergePoints(kmlPoints, historicalPoints) {
-  const pointMap = new Map();
-
-  for (const p of historicalPoints) {
-    const timeKey = p.time.toISOString();
-    pointMap.set(timeKey, p);
-  }
-
-  for (const p of kmlPoints) {
-    const timeKey = p.time.toISOString();
-    pointMap.set(timeKey, p);
-  }
-
-  return Array.from(pointMap.values()).sort((a, b) => a.time - b.time);
 }

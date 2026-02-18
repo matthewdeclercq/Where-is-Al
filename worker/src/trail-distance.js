@@ -1,47 +1,5 @@
 import { AT_TRAIL_DATA } from './at-trail-with-miles.js';
-
-/**
- * Project a point onto a line segment and return the distance and parametric t.
- * Uses approximate Cartesian projection (same approach as trail-proximity.js).
- *
- * @param {number} pLat - Point latitude
- * @param {number} pLon - Point longitude
- * @param {number} aLat - Segment start latitude
- * @param {number} aLon - Segment start longitude
- * @param {number} bLat - Segment end latitude
- * @param {number} bLon - Segment end longitude
- * @returns {{ distance: number, t: number }} distance in miles, t in [0, 1]
- */
-export function projectToSegment(pLat, pLon, aLat, aLon, bLat, bLon) {
-  const cosLat = Math.cos((pLat * Math.PI) / 180);
-  const MILES_PER_DEG_LAT = 69.0;
-  const MILES_PER_DEG_LON = 69.0 * cosLat;
-
-  const px = (pLon - aLon) * MILES_PER_DEG_LON;
-  const py = (pLat - aLat) * MILES_PER_DEG_LAT;
-  const bx = (bLon - aLon) * MILES_PER_DEG_LON;
-  const by = (bLat - aLat) * MILES_PER_DEG_LAT;
-
-  const segLenSq = bx * bx + by * by;
-
-  let t;
-  if (segLenSq === 0) {
-    t = 0;
-  } else {
-    t = (px * bx + py * by) / segLenSq;
-    t = Math.max(0, Math.min(1, t));
-  }
-
-  const closestX = t * bx;
-  const closestY = t * by;
-  const dx = px - closestX;
-  const dy = py - closestY;
-
-  return {
-    distance: Math.sqrt(dx * dx + dy * dy),
-    t
-  };
-}
+import { projectToSegment } from './geo.js';
 
 /**
  * Snap a GPS point to the nearest position on the AT trail.

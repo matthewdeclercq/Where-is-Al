@@ -1,6 +1,9 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
 import { getMockElevationData, getMockElevationDays } from './mock.js';
 import { calculateElevationStats } from './stats.js';
+import { DATE_REGEX } from './constants.js';
+
+const hasElevationData = p => p.trailElevation != null || p.elevation != null;
 
 // Elevation handler
 export async function handleElevation(request, env) {
@@ -14,8 +17,7 @@ export async function handleElevation(request, env) {
     return handleElevationDays(request, env);
   }
 
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(dayParam)) {
+  if (!DATE_REGEX.test(dayParam)) {
     return createErrorResponse(400, 'Invalid date format. Use YYYY-MM-DD', request);
   }
 
@@ -75,8 +77,7 @@ export async function handleElevationDays(request, env) {
         const dayPointsJson = await env.TRAIL_HISTORY.get(key.name);
         if (dayPointsJson) {
           const dayPoints = JSON.parse(dayPointsJson);
-          const hasElevation = dayPoints.some(p => p.trailElevation != null || (p.elevation != null));
-          return hasElevation ? dateStr : null;
+          return dayPoints.some(hasElevationData) ? dateStr : null;
         }
       } catch (error) {
         console.error(`[Worker] Failed to read ${key.name}:`, error);
@@ -114,7 +115,7 @@ export async function getElevationByDay(dateStr, env) {
     const dayPoints = JSON.parse(dayPointsJson);
 
     const elevationPoints = dayPoints
-      .filter(p => (p.trailElevation != null) || (p.elevation != null))
+      .filter(hasElevationData)
       .map(p => ({
         time: p.time,
         elevation: Math.round((p.trailElevation != null ? p.trailElevation : p.elevation) * 10) / 10

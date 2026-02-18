@@ -49,25 +49,22 @@
             return [];
         }
 
-        return new Promise((resolve) => {
-            window.ApiClient.fetch(
+        try {
+            const data = await window.ApiClient.fetch(
                 `${ElevationConfig.workerUrl}elevation`,
                 { method: 'GET' },
                 {
-                    onSuccess: (data) => {
-                        resolve(data.days || []);
-                    },
+                    onSuccess: () => {},
                     onError: (error) => {
                         console.error('[Elevation] Failed to fetch available days:', error);
-                        resolve([]);
                     }
                 },
                 state
-            ).catch(() => {
-                // Error already handled in onError callback
-                resolve([]);
-            });
-        });
+            );
+            return data?.days || [];
+        } catch {
+            return [];
+        }
     }
 
     /**
@@ -83,25 +80,22 @@
             return null;
         }
 
-        return new Promise((resolve) => {
-            window.ApiClient.fetch(
+        try {
+            const data = await window.ApiClient.fetch(
                 `${ElevationConfig.workerUrl}elevation?day=${day}`,
                 { method: 'GET' },
                 {
-                    onSuccess: (data) => {
-                        resolve(data);
-                    },
+                    onSuccess: () => {},
                     onError: (error) => {
                         console.error('[Elevation] Failed to fetch elevation data:', error);
-                        resolve(null);
                     }
                 },
                 state
-            ).catch(() => {
-                // Error already handled in onError callback
-                resolve(null);
-            });
-        });
+            );
+            return data ?? null;
+        } catch {
+            return null;
+        }
     }
 
     /**
@@ -346,7 +340,7 @@
         return points.filter(point => {
             if (!point.time) return false;
             const date = new Date(point.time);
-            const hour = date.getHours();
+            const hour = ((date.getUTCHours() - 4) + 24) % 24; // Convert UTC to EDT
             // Include points from 6am (6) to 8pm (20, inclusive)
             return hour >= 6 && hour <= 20;
         });
@@ -422,6 +416,46 @@
     }
 
     /**
+     * Refresh the currently selected day's elevation data (used for visibility/auto-refresh)
+     */
+    async function fetchElevation() {
+        if (state.selectedDay) {
+            const prevDay = state.selectedDay;
+            state.selectedDay = null; // Clear to force re-fetch in selectDay
+            await selectDay(prevDay);
+        }
+    }
+
+    /**
+     * Setup automatic refresh
+     */
+    function setupAutoRefresh() {
+        if (ElevationConfig.enableAutoRefresh) {
+            window.ApiClient.setupAutoRefresh(fetchElevation, ElevationConfig.refreshInterval, state);
+        }
+    }
+
+    /**
+     * Handle page visibility changes
+     */
+    function handleVisibilityChange() {
+        window.ApiClient.handleVisibilityChange(fetchElevation, setupAutoRefresh, state);
+    }
+
+    /**
+     * Cleanup on page unload
+     */
+    function cleanup() {
+        window.ApiClient.cleanup(state);
+        Utils.VisibilityManager.unregister(handleVisibilityChange);
+        if (state.chart) {
+            state.chart.destroy();
+            state.chart = null;
+        }
+        window.removeEventListener('resize', debouncedHandleResize);
+    }
+
+    /**
      * Initialize elevation module
      */
     async function initializeElevation() {
@@ -461,12 +495,18 @@
         }
     }
 
+    // Handle window resize with standardized debouncing
+    const debouncedHandleResize = Utils.debounce(handleResize, 200);
+
     // Initialize when DOM is ready
     Utils.ready(initializeElevation);
 
-    // Handle window resize with standardized debouncing
-    const debouncedHandleResize = Utils.debounce(handleResize, 200);
-    
+    // Register visibility change handler
+    Utils.VisibilityManager.register(handleVisibilityChange);
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+
     window.addEventListener('resize', debouncedHandleResize);
 })();
 

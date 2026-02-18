@@ -41,8 +41,11 @@ export async function fetchWeather(lat, lon) {
     fetch(geocodeUrl, { signal: geocodeController.signal }).finally(() => clearTimeout(geocodeTimeout))
   ]);
 
-  if (weatherResponse.status === 'rejected' || !weatherResponse.value.ok) {
-    throw new Error(`Weather API error: ${weatherResponse.value?.status ?? 'network error'}`);
+  if (weatherResponse.status === 'rejected') {
+    throw new Error(`Weather API error: ${weatherResponse.reason?.message ?? 'network error'}`);
+  }
+  if (!weatherResponse.value.ok) {
+    throw new Error(`Weather API error: ${weatherResponse.value.status}`);
   }
 
   let locationName = null;

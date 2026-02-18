@@ -3,7 +3,7 @@ import { validateEnvVars, buildKmlUrl, buildKmlFetchOptions } from './utils.js';
 import { getMockData } from './mock.js';
 import { parseKmlPoints } from './kml.js';
 import { calculateStats } from './stats.js';
-import { loadHistoricalPoints, storePointsByDay, mergePoints } from './storage.js';
+import { loadHistoricalPoints, storePointsByDay } from './storage.js';
 import { fetchWeather } from './weather.js';
 import { TOTAL_TRAIL_MILES, DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
 import { tagPointsOnOffTrail } from './trail-proximity.js';
@@ -39,9 +39,8 @@ export async function handleStats(request, env) {
     const allPoints = await loadHistoricalPoints(START_DATE_STR, env);
 
     // Tag points as on/off trail and filter for stats
-    const thresholdMiles = env.OFF_TRAIL_THRESHOLD
-      ? parseFloat(env.OFF_TRAIL_THRESHOLD)
-      : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
+    const parsed = parseFloat(env.OFF_TRAIL_THRESHOLD);
+    const thresholdMiles = Number.isFinite(parsed) ? parsed : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
     tagPointsOnOffTrail(allPoints, AT_TRAIL_COORDS, thresholdMiles);
     snapPointsToTrail(allPoints);
 
@@ -134,20 +133,11 @@ export async function handleSync(request, env) {
     await storePointsByDay(kmlPoints, env);
 
     const keys = await env.TRAIL_HISTORY.list({ prefix: 'points:' });
-    let totalPoints = 0;
-    for (const key of keys.keys) {
-      const dayPointsJson = await env.TRAIL_HISTORY.get(key.name);
-      if (dayPointsJson) {
-        const dayPoints = JSON.parse(dayPointsJson);
-        totalPoints += dayPoints.length;
-      }
-    }
 
     return createSuccessResponse({
       success: true,
       message: 'Sync completed',
       kmlPointsProcessed: kmlPoints.length,
-      totalStoredPoints: totalPoints,
       daysStored: keys.keys.length
     }, request);
   } catch (error) {

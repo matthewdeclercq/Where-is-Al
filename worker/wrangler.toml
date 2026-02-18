@@ -10,7 +10,7 @@ port = 8788
 [[kv_namespaces]]
 binding = "TRAIL_HISTORY"
 id = "f7b75c01987e46fe9ab1b7a110cb12bd"
-#remote = true
+remote = true
 
 # Non-secret environment variables
 [vars]
