@@ -47,16 +47,38 @@ export async function handleStats(request, env) {
 
     const stats = calculateStats(allPoints, START_DATE_STR, TOTAL_TRAIL_MILES, { filterOffTrail: true });
 
+    const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
     let weather = null;
     let location = null;
     if (allPoints.length > 0) {
       const currentPoint = allPoints[allPoints.length - 1];
       location = { lat: currentPoint.lat, lon: currentPoint.lon };
 
-      try {
-        weather = await fetchWeather(currentPoint.lat, currentPoint.lon);
-      } catch (error) {
-        console.error('[Worker] Weather fetch failed:', error);
+      // Try KV cache first to avoid rate-limiting Open-Meteo
+      let usedCache = false;
+      if (env.TRAIL_HISTORY) {
+        try {
+          const cachedJson = await env.TRAIL_HISTORY.get('cache:weather');
+          if (cachedJson) {
+            const cached = JSON.parse(cachedJson);
+            if (Date.now() - cached.timestamp < WEATHER_CACHE_TTL_MS) {
+              weather = cached.weather;
+              usedCache = true;
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!usedCache) {
+        try {
+          weather = await fetchWeather(currentPoint.lat, currentPoint.lon);
+          if (env.TRAIL_HISTORY) {
+            await env.TRAIL_HISTORY.put('cache:weather', JSON.stringify({ weather, timestamp: Date.now() }));
+          }
+        } catch (error) {
+          console.error('[Worker] Weather fetch failed:', error.message);
+        }
       }
     }
 

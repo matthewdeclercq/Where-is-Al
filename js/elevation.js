@@ -249,17 +249,10 @@
             updateVerticalLoss(null);
         };
 
-        if (!elevationData || !elevationData.points || elevationData.points.length === 0) {
-            if (placeholder) {
-                placeholder.textContent = 'No elevation data available for this day.';
-                placeholder.style.display = 'block';
-            }
-            clearChart();
-            return;
-        }
+        const filteredPoints = (!elevationData || !elevationData.points)
+            ? []
+            : filterDaytimePoints(elevationData.points);
 
-        // Check daytime filter before showing the chart container
-        const filteredPoints = filterDaytimePoints(elevationData.points);
         if (filteredPoints.length === 0) {
             if (placeholder) {
                 placeholder.textContent = 'No hiking data recorded for this day.';
