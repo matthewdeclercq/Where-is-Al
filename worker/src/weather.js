@@ -29,13 +29,16 @@ const weatherCodeMap = {
   99: 'Thunderstorm with heavy hail'
 };
 
-const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const WEATHER_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 /**
  * Fetch weather with KV caching to avoid rate-limiting Open-Meteo.
  * Returns the weather object, sourced from cache if fresh enough.
+ * On fetch error, serves stale cached data if available to avoid rate-limit spirals.
  */
 export async function fetchWeatherCached(lat, lon, env) {
+  let staleCache = null;
+
   if (env.TRAIL_HISTORY) {
     try {
       const cachedJson = await env.TRAIL_HISTORY.get('cache:weather');
@@ -44,23 +47,32 @@ export async function fetchWeatherCached(lat, lon, env) {
         if (Date.now() - cached.timestamp < WEATHER_CACHE_TTL_MS) {
           return cached.weather;
         }
+        staleCache = cached.weather;
       }
     } catch (error) {
       console.error('[Weather] Failed to read weather cache:', error);
     }
   }
 
-  const weather = await fetchWeather(lat, lon);
+  try {
+    const weather = await fetchWeather(lat, lon);
 
-  if (env.TRAIL_HISTORY) {
-    try {
-      await env.TRAIL_HISTORY.put('cache:weather', JSON.stringify({ weather, timestamp: Date.now() }));
-    } catch (error) {
-      console.error('[Weather] Failed to write weather cache:', error);
+    if (env.TRAIL_HISTORY) {
+      try {
+        await env.TRAIL_HISTORY.put('cache:weather', JSON.stringify({ weather, timestamp: Date.now() }));
+      } catch (error) {
+        console.error('[Weather] Failed to write weather cache:', error);
+      }
     }
-  }
 
-  return weather;
+    return weather;
+  } catch (error) {
+    if (staleCache) {
+      console.warn('[Weather] Fetch failed, serving stale cache:', error.message);
+      return staleCache;
+    }
+    throw error;
+  }
 }
 
 export async function fetchWeather(lat, lon) {
