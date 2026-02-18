@@ -1,13 +1,46 @@
 import { TOKEN_EXPIRY_MS } from './constants.js';
 import { createErrorResponse, createSuccessResponse } from './responses.js';
 
-// Decode token from base64 JSON format
-function decodeToken(token) {
+const AUTH_RATE_LIMIT = {
+  maxAttempts: 10,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+};
+
+async function checkRateLimit(ip, env) {
+  if (!env.TRAIL_HISTORY || !ip) return { limited: false };
   try {
-    return JSON.parse(atob(token));
-  } catch (error) {
-    return null;
-  }
+    const data = await env.TRAIL_HISTORY.get(`ratelimit:auth:${ip}`);
+    if (!data) return { limited: false };
+    const { count, resetAt } = JSON.parse(data);
+    if (Date.now() >= resetAt) return { limited: false };
+    if (count >= AUTH_RATE_LIMIT.maxAttempts) {
+      return { limited: true, retryAfter: Math.ceil((resetAt - Date.now()) / 1000) };
+    }
+  } catch (_) {}
+  return { limited: false };
+}
+
+async function recordFailedAttempt(ip, env) {
+  if (!env.TRAIL_HISTORY || !ip) return;
+  const key = `ratelimit:auth:${ip}`;
+  try {
+    const now = Date.now();
+    let count = 1;
+    let resetAt = now + AUTH_RATE_LIMIT.windowMs;
+    const existing = await env.TRAIL_HISTORY.get(key);
+    if (existing) {
+      const d = JSON.parse(existing);
+      if (now < d.resetAt) { count = d.count + 1; resetAt = d.resetAt; }
+    }
+    await env.TRAIL_HISTORY.put(key, JSON.stringify({ count, resetAt }), {
+      expirationTtl: Math.ceil((resetAt - now) / 1000)
+    });
+  } catch (_) {}
+}
+
+async function clearRateLimit(ip, env) {
+  if (!env.TRAIL_HISTORY || !ip) return;
+  try { await env.TRAIL_HISTORY.delete(`ratelimit:auth:${ip}`); } catch (_) {}
 }
 
 /**
@@ -19,27 +52,13 @@ export async function validateToken(token, env) {
   }
 
   try {
-    // Try KV-based validation first (more secure, allows revocation)
-    if (env.TRAIL_HISTORY) {
-      const tokenData = await env.TRAIL_HISTORY.get(`token:${token}`);
-      if (tokenData) {
-        const { expires } = JSON.parse(tokenData);
-        if (Date.now() < expires) {
-          return true;
-        } else {
-          await env.TRAIL_HISTORY.delete(`token:${token}`);
-          return false;
-        }
-      }
-    }
-
-    // Fallback: decode token to check expiry
-    const decoded = decodeToken(token);
-    if (!decoded || !decoded.expires) {
-      return false;
-    }
-
-    return Date.now() < decoded.expires;
+    if (!env.TRAIL_HISTORY) return false;
+    const tokenData = await env.TRAIL_HISTORY.get(`token:${token}`);
+    if (!tokenData) return false;
+    const { expires } = JSON.parse(tokenData);
+    if (Date.now() < expires) return true;
+    await env.TRAIL_HISTORY.delete(`token:${token}`);
+    return false;
   } catch (error) {
     console.error('[Worker] Token validation error:', error);
     return false;
@@ -90,7 +109,19 @@ export async function handleAuth(request, env) {
       return createErrorResponse(500, 'Authentication not configured', request);
     }
 
+    const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || null;
+    const rateLimit = await checkRateLimit(ip, env);
+    if (rateLimit.limited) {
+      return createErrorResponse(429, 'Too many attempts. Please try again later.', request, {
+        'Retry-After': rateLimit.retryAfter.toString(),
+        'Cache-Control': 'no-cache'
+      });
+    }
+
+    // to lower case is intentional and not a security risk
     if (password.toLowerCase() === CORRECT_PASSWORD) {
+      await clearRateLimit(ip, env);
+
       const tokenId = crypto.randomUUID();
       const expiry = Date.now() + TOKEN_EXPIRY_MS;
       const tokenData = { id: tokenId, expires: expiry };
@@ -107,6 +138,7 @@ export async function handleAuth(request, env) {
       });
     }
 
+    await recordFailedAttempt(ip, env);
     return createErrorResponse(401, 'Invalid password', request, {
       'Cache-Control': 'no-cache'
     });
