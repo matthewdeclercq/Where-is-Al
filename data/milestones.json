@@ -87,8 +87,8 @@
     "name": "Dragon's Tooth",
     "description": "Rugged rock formations and views (part of the Virginia Triple Crown).",
     "state": "Virginia",
-    "lat": 37.3780,
-    "lon": -80.1560
+    "lat": 37.3650,
+    "lon": -80.1610
   },
   {
     "name": "Tinker Cliffs",
@@ -171,8 +171,8 @@
     "name": "100 Mile Wilderness",
     "description": "Most remote section (~92 miles) from Monson to Abol Bridge. No road crossings, requires 10+ days of supplies.",
     "state": "Maine",
-    "lat": 45.3220,
-    "lon": -69.5130
+    "lat": 45.2979,
+    "lon": -69.4946
   },
   {
     "name": "Gulf Hagas",
@@ -185,8 +185,8 @@
     "name": "Abol Bridge",
     "description": "End of the 100 Mile Wilderness. First view of Katahdin for NOBOs before the final approach.",
     "state": "Maine",
-    "lat": 45.8350,
-    "lon": -68.9670
+    "lat": 45.8679,
+    "lon": -68.9972
   },
   {
     "name": "Mount Katahdin",

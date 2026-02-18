@@ -4,7 +4,7 @@
         "description": "Local Irish pub serving fried chicken plate",
         "state": "Georgia",
         "lat": 34.532,
-        "lon": -84.009
+        "lon": -83.985
     },
     {
         "name": "Bigg Daddys Restaurant",
@@ -14,18 +14,11 @@
         "lon": -83.728
     },
     {
-        "name": "Muller's Famous Fried Chicken",
-        "description": "Local spot famous for fried chicken",
-        "state": "Georgia",
-        "lat": 34.701,
-        "lon": -83.728
-    },
-    {
         "name": "Daniel's Steakhouse",
         "description": "Southern buffet with standout fried chicken and sides",
         "state": "Georgia",
         "lat": 34.879,
-        "lon": -83.757
+        "lon": -83.399
     },
     {
         "name": "Papa's Pizza & Subs",
@@ -84,32 +77,18 @@
         "lon": -81.784
     },
     {
-        "name": "Wicked Chicken Winghouse & Tavern",
-        "description": "Local tavern offering fried chicken options",
-        "state": "Virginia",
-        "lat": 36.634,
-        "lon": -81.784
-    },
-    {
-        "name": "Hellbender's Cafe",
-        "description": "Local cafe serving fried chicken legs with sides",
-        "state": "Virginia",
-        "lat": 36.634,
-        "lon": -81.784
-    },
-    {
         "name": "MacArthur Inn Restaurant",
         "description": "Historic inn restaurant with home-style fried chicken",
         "state": "Virginia",
-        "lat": 37.330,
-        "lon": -80.810
+        "lat": 37.329,
+        "lon": -80.744
     },
     {
         "name": "Keystone Restaurant",
         "description": "Home-style local diner with always-available fried chicken",
         "state": "Virginia",
-        "lat": 37.050,
-        "lon": -81.100
+        "lat": 37.096,
+        "lon": -81.062
     },
     {
         "name": "The Homeplace Restaurant",
@@ -123,14 +102,14 @@
         "description": "Local roadside spot known for excellent Southern fried chicken",
         "state": "Virginia",
         "lat": 38.067,
-        "lon": -78.678
+        "lon": -78.889
     },
     {
         "name": "Mrs. Rowe's Restaurant & Bakery",
         "description": "Iconic local Southern restaurant with fried chicken",
         "state": "Virginia",
-        "lat": 38.068,
-        "lon": -78.890
+        "lat": 38.149,
+        "lon": -79.073
     },
     {
         "name": "Spelunker's Frozen Custard & Grill",
@@ -145,13 +124,6 @@
         "state": "West Virginia",
         "lat": 39.323,
         "lon": -77.729
-    },
-    {
-        "name": "Kelley Farm Kitchen",
-        "description": "Farm-to-table local spot with fried chicken",
-        "state": "West Virginia",
-        "lat": 39.325,
-        "lon": -77.739
     },
     {
         "name": "Old South Mountain Inn",
@@ -172,7 +144,7 @@
         "description": "Local mountain restaurant serving fried chicken",
         "state": "Pennsylvania",
         "lat": 40.580,
-        "lon": -76.025
+        "lon": -75.569
     },
     {
         "name": "Sycamore Grille",
@@ -198,13 +170,6 @@
     {
         "name": "Fife n Drum Restaurant",
         "description": "Local restaurant serving fried chicken",
-        "state": "Connecticut",
-        "lat": 41.724,
-        "lon": -73.477
-    },
-    {
-        "name": "Kingsley Tavern",
-        "description": "Local tavern with fried chicken",
         "state": "Connecticut",
         "lat": 41.724,
         "lon": -73.477
@@ -245,13 +210,6 @@
         "lon": -71.188
     },
     {
-        "name": "Mr. Pizza",
-        "description": "Local pizza spot with fried chicken baskets",
-        "state": "New Hampshire",
-        "lat": 44.387,
-        "lon": -71.188
-    },
-    {
         "name": "Furbish Brew House & Eats",
         "description": "Local brew house with fried chicken eats",
         "state": "Maine",
@@ -263,21 +221,14 @@
         "description": "Local dinner house serving fried chicken",
         "state": "Maine",
         "lat": 45.140,
-        "lon": -70.310
+        "lon": -70.426
     },
     {
         "name": "Lakeshore House",
         "description": "Local lakeshore restaurant with fried chicken",
         "state": "Maine",
         "lat": 45.286,
-        "lon": -69.589
-    },
-    {
-        "name": "Pie Lady Café",
-        "description": "Local cafe with fried chicken nights",
-        "state": "Maine",
-        "lat": 45.286,
-        "lon": -69.589
+        "lon": -69.490
     },
     {
         "name": "Appalachian Trail Cafe",
