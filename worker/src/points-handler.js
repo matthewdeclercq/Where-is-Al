@@ -1,10 +1,8 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
-import { validateEnvVars } from './utils.js';
+import { validateEnvOrError } from './utils.js';
 import { loadHistoricalPoints, serializePoint } from './storage.js';
-import { tagPointsOnOffTrail } from './trail-proximity.js';
-import { AT_TRAIL_COORDS } from './at-trail-simplified.js';
 import { DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
-import { snapPointsToTrail } from './trail-distance.js';
+import { tagAndSnapPoints } from './trail-distance.js';
 
 // Points handler — reads points from KV only (cron handles KML polling)
 export async function handlePoints(request, env) {
@@ -24,19 +22,14 @@ export async function handlePoints(request, env) {
     });
   }
 
-  const validationErrors = validateEnvVars(env, true);
-  if (validationErrors.length > 0) {
-    return createErrorResponse(500, validationErrors.join('; '), request, {
-      'Cache-Control': 'no-cache'
-    });
-  }
+  const envError = validateEnvOrError(env, request, true);
+  if (envError) return envError;
 
   try {
     const allPoints = await loadHistoricalPoints(START_DATE_STR, env);
 
-    // Tag on/off trail, then snap to get trail miles and elevation
-    tagPointsOnOffTrail(allPoints, AT_TRAIL_COORDS, thresholdMiles);
-    snapPointsToTrail(allPoints);
+    // Tag on/off trail and snap to trail in a single pass
+    tagAndSnapPoints(allPoints, undefined, thresholdMiles);
 
     // Serialize points for response
     const responsePoints = allPoints.map(p => ({

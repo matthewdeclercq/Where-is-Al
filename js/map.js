@@ -31,61 +31,53 @@
     };
 
     let map = null;
+    let mapSection = null;
     let trailLayer = null;
     let milestonesLayer = null;
     let pointsLayer = null;
     let routeLineLayer = null;
     let currentMarker = null;
-    let trailDataLoaded = false;
-    let milestonesDataLoaded = false;
     let hasInitiallyFocused = false;
 
-    function addFullscreenControl() {
-        var FullscreenControl = L.Control.extend({
+    function createMapControl(options) {
+        var Control = L.Control.extend({
             options: { position: 'topright' },
             onAdd: function() {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control map-fullscreen-control');
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control' + (options.containerClass ? ' ' + options.containerClass : ''));
                 var button = L.DomUtil.create('a', 'map-fullscreen-button', container);
                 button.href = '#';
-                button.title = 'Toggle fullscreen';
+                button.title = options.title;
                 button.setAttribute('role', 'button');
-                button.setAttribute('aria-label', 'Toggle fullscreen');
-                button.innerHTML = '<i class="fas fa-expand"></i>';
+                button.setAttribute('aria-label', options.title);
+                button.innerHTML = options.innerHTML;
 
                 L.DomEvent.disableClickPropagation(container);
                 L.DomEvent.on(button, 'click', function(e) {
                     L.DomEvent.preventDefault(e);
-                    toggleFullscreen(button);
+                    options.onClick(button);
                 });
 
                 return container;
             }
         });
-        map.addControl(new FullscreenControl());
+        map.addControl(new Control());
+    }
+
+    function addFullscreenControl() {
+        createMapControl({
+            containerClass: 'map-fullscreen-control',
+            title: 'Toggle fullscreen',
+            innerHTML: '<i class="fas fa-expand"></i>',
+            onClick: toggleFullscreen
+        });
     }
 
     function addLocateControl() {
-        var LocateControl = L.Control.extend({
-            options: { position: 'topright' },
-            onAdd: function() {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                var button = L.DomUtil.create('a', 'map-fullscreen-button', container);
-                button.href = '#';
-                button.title = 'Go to current location';
-                button.setAttribute('role', 'button');
-                button.setAttribute('aria-label', 'Go to current location');
-                button.innerHTML = '<i class="fas fa-crosshairs"></i>';
-
-                L.DomEvent.disableClickPropagation(container);
-                L.DomEvent.on(button, 'click', function(e) {
-                    L.DomEvent.preventDefault(e);
-                    flyToCurrentLocation();
-                });
-
-                return container;
-            }
+        createMapControl({
+            title: 'Go to current location',
+            innerHTML: '<i class="fas fa-crosshairs"></i>',
+            onClick: function() { flyToCurrentLocation(); }
         });
-        map.addControl(new LocateControl());
     }
 
     function flyToCurrentLocation() {
@@ -96,7 +88,7 @@
     }
 
     function toggleFullscreen(button) {
-        var wrapper = document.querySelector('.map-section');
+        var wrapper = mapSection;
         if (!wrapper) return;
 
         if (wrapper.classList.contains('map-fullscreen')) {
@@ -167,12 +159,14 @@
         // Setup auto-refresh
         setupAutoRefresh();
 
+        // Cache map section element
+        mapSection = document.querySelector('.map-section');
+
         // Handle Escape key to exit fullscreen
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                var wrapper = document.querySelector('.map-section.map-fullscreen');
-                if (wrapper) {
-                    var btn = wrapper.querySelector('.map-fullscreen-button');
+                if (mapSection && mapSection.classList.contains('map-fullscreen')) {
+                    var btn = mapSection.querySelector('.map-fullscreen-button');
                     if (btn) toggleFullscreen(btn);
                 }
             }
@@ -203,7 +197,6 @@
                         lineJoin: 'round'
                     }
                 }).addTo(map);
-                trailDataLoaded = true;
             })
             .catch(function(error) {
                 console.error('[Map] Failed to load trail data:', error);
@@ -237,7 +230,6 @@
                 });
 
                 milestonesLayer.addTo(map);
-                milestonesDataLoaded = true;
             })
             .catch(function(error) {
                 console.error('[Map] Failed to load milestones:', error);

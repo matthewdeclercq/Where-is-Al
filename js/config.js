@@ -17,7 +17,8 @@
         refreshIntervals: {
             stats: 3600000,      // 1 hour
             weather: 3600000,    // 1 hour
-            map: 1800000         // 30 minutes
+            map: 1800000,        // 30 minutes
+            elevation: 3600000   // 1 hour
         },
         
         // Backoff configuration

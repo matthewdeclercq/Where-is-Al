@@ -49,11 +49,25 @@
     "lon": -82.9620
   },
   {
+    "name": "Hot Springs",
+    "description": "Trail runs through downtown. Natural mineral baths and resupply. One of three towns the A.T. passes directly through.",
+    "state": "North Carolina",
+    "lat": 35.8920,
+    "lon": -82.8290
+  },
+  {
     "name": "Roan Highlands",
     "description": "Grassy balds (Round Bald, Jane Bald, Grassy Ridge) with 360-degree vistas.",
     "state": "Tennessee / North Carolina",
     "lat": 36.1060,
     "lon": -82.1100
+  },
+  {
+    "name": "Damascus",
+    "description": "\"Trail Town USA.\" One of three towns the A.T. passes through downtown. Hosts Trail Days each May.",
+    "state": "Virginia",
+    "lat": 36.6330,
+    "lon": -81.7890
   },
   {
     "name": "Grayson Highlands",
@@ -98,6 +112,13 @@
     "lon": -77.3060
   },
   {
+    "name": "Delaware Water Gap",
+    "description": "Historic crossing at the PA/NJ border. A.T. Community with scenic notch cut by the Delaware River.",
+    "state": "Pennsylvania / New Jersey",
+    "lat": 40.9680,
+    "lon": -75.1200
+  },
+  {
     "name": "Bear Mountain Bridge",
     "description": "Lowest elevation on the trail (124 ft) crossing the Hudson River.",
     "state": "New York",
@@ -112,11 +133,25 @@
     "lon": -73.1660
   },
   {
+    "name": "Hanover",
+    "description": "Trail runs through Main Street. One of three towns the A.T. passes through. Dartmouth Outing Club maintains the section.",
+    "state": "New Hampshire",
+    "lat": 43.7040,
+    "lon": -72.2890
+  },
+  {
     "name": "Mount Moosilauke",
     "description": "White Mountains begin - first big alpine climb for NOBOs.",
     "state": "New Hampshire",
     "lat": 44.0240,
     "lon": -71.6810
+  },
+  {
+    "name": "Franconia Ridge",
+    "description": "One of the longest above-treeline stretches on the A.T. Mt. Lafayette, Lincoln, Liberty. Stunning 360-degree views.",
+    "state": "New Hampshire",
+    "lat": 44.1610,
+    "lon": -71.6450
   },
   {
     "name": "Mount Washington",
@@ -131,6 +166,27 @@
     "state": "Maine",
     "lat": 44.5580,
     "lon": -70.9990
+  },
+  {
+    "name": "100 Mile Wilderness",
+    "description": "Most remote section (~92 miles) from Monson to Abol Bridge. No road crossings, requires 10+ days of supplies.",
+    "state": "Maine",
+    "lat": 45.3220,
+    "lon": -69.5130
+  },
+  {
+    "name": "Gulf Hagas",
+    "description": "\"Grand Canyon of Maine\" - dramatic slate gorge with 130-ft walls and waterfalls in the 100 Mile Wilderness.",
+    "state": "Maine",
+    "lat": 45.4840,
+    "lon": -69.3230
+  },
+  {
+    "name": "Abol Bridge",
+    "description": "End of the 100 Mile Wilderness. First view of Katahdin for NOBOs before the final approach.",
+    "state": "Maine",
+    "lat": 45.8350,
+    "lon": -68.9670
   },
   {
     "name": "Mount Katahdin",

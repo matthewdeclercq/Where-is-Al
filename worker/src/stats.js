@@ -1,18 +1,9 @@
 import { haversine } from './geo.js';
-import { getUTCDateString, groupPointsByDate, calculateCurrentDay } from './utils.js';
+import { getUTCDateString, groupPointsByDate, calculateCurrentDay, getElevation } from './utils.js';
 import {
   MOVING_VELOCITY_THRESHOLD_MPH,
   MIN_DAY_ON_TRAIL
 } from './constants.js';
-
-/**
- * Get the effective elevation for a point, preferring trailElevation over GPS elevation.
- */
-function getElevation(point) {
-  if (point.trailElevation != null) return point.trailElevation;
-  if (point.elevation != null) return point.elevation;
-  return null;
-}
 
 /**
  * Helper function to calculate elevation statistics from points array
@@ -42,14 +33,8 @@ export function calculateElevationStats(points) {
 /**
  * Calculate daily elevation gain for all days
  */
-function calculateDailyElevationGain(points) {
+function calculateDailyElevationGain(pointsByDate) {
   const dailyElevationGainMap = new Map();
-
-  if (points.length < 2) {
-    return dailyElevationGainMap;
-  }
-
-  const pointsByDate = groupPointsByDate(points);
 
   for (const [dateKey, dayPoints] of pointsByDate.entries()) {
     if (dayPoints.length < 2) {
@@ -86,14 +71,8 @@ function calculateDailyElevationGain(points) {
  * Calculate daily mileage using trail miles (max - min trailMile per day).
  * Falls back to haversine for days with no trail mile data.
  */
-function calculateDailyMileage(points) {
+function calculateDailyMileage(pointsByDate) {
   const dailyMileageMap = new Map();
-
-  if (points.length < 2) {
-    return dailyMileageMap;
-  }
-
-  const pointsByDate = groupPointsByDate(points);
 
   for (const [dateKey, dayPoints] of pointsByDate.entries()) {
     if (dayPoints.length < 2) {
@@ -185,7 +164,8 @@ export function calculateStats(points, startDateStr, totalTrailMiles, options = 
     }
   }
 
-  const dailyMileageMap = calculateDailyMileage(points);
+  const pointsByDate = groupPointsByDate(points);
+  const dailyMileageMap = calculateDailyMileage(pointsByDate);
   const todayStr = getUTCDateString(todayUTC);
   const hasDataToday = dailyMileageMap.has(todayStr);
 
@@ -219,7 +199,7 @@ export function calculateStats(points, startDateStr, totalTrailMiles, options = 
     }
   }
 
-  const dailyElevationGain = calculateDailyElevationGain(points);
+  const dailyElevationGain = calculateDailyElevationGain(pointsByDate);
   let mostElevationGainFeet = 0;
   let mostElevationGainDate = null;
 

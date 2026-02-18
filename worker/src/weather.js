@@ -29,6 +29,40 @@ const weatherCodeMap = {
   99: 'Thunderstorm with heavy hail'
 };
 
+const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Fetch weather with KV caching to avoid rate-limiting Open-Meteo.
+ * Returns the weather object, sourced from cache if fresh enough.
+ */
+export async function fetchWeatherCached(lat, lon, env) {
+  if (env.TRAIL_HISTORY) {
+    try {
+      const cachedJson = await env.TRAIL_HISTORY.get('cache:weather');
+      if (cachedJson) {
+        const cached = JSON.parse(cachedJson);
+        if (Date.now() - cached.timestamp < WEATHER_CACHE_TTL_MS) {
+          return cached.weather;
+        }
+      }
+    } catch (error) {
+      console.error('[Weather] Failed to read weather cache:', error);
+    }
+  }
+
+  const weather = await fetchWeather(lat, lon);
+
+  if (env.TRAIL_HISTORY) {
+    try {
+      await env.TRAIL_HISTORY.put('cache:weather', JSON.stringify({ weather, timestamp: Date.now() }));
+    } catch (error) {
+      console.error('[Weather] Failed to write weather cache:', error);
+    }
+  }
+
+  return weather;
+}
+
 export async function fetchWeather(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5&temperature_unit=fahrenheit`;
   const geocodeUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;

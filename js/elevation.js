@@ -5,8 +5,7 @@
     // Configuration
     const ElevationConfig = {
         workerUrl: Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
-        refreshInterval: Utils.getConfig('refreshIntervals.elevation', 3600000),
-        enableAutoRefresh: true
+        refreshInterval: Utils.getConfig('refreshIntervals.elevation', 3600000)
     };
 
     // Module state
@@ -340,7 +339,7 @@
         return points.filter(point => {
             if (!point.time) return false;
             const date = new Date(point.time);
-            const hour = ((date.getUTCHours() - 4) + 24) % 24; // Convert UTC to EDT
+            const hour = ((date.getUTCHours() - 4) + 24) % 24; // UTC to EDT (offset -4); note: uses EDT year-round, not EST (-5) in winter
             // Include points from 6am (6) to 8pm (20, inclusive)
             return hour >= 6 && hour <= 20;
         });
@@ -430,9 +429,7 @@
      * Setup automatic refresh
      */
     function setupAutoRefresh() {
-        if (ElevationConfig.enableAutoRefresh) {
-            window.ApiClient.setupAutoRefresh(fetchElevation, ElevationConfig.refreshInterval, state);
-        }
+        window.ApiClient.setupAutoRefresh(fetchElevation, ElevationConfig.refreshInterval, state);
     }
 
     /**

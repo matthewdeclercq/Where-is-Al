@@ -41,6 +41,8 @@ Where-is-Al/
 │   ├── manifest.json       # List of log entry filenames
 │   └── *.html              # Individual log entry files
 ├── assets/                 # Images and media
+├── scripts/
+│   └── build-trail-data.js # Generates at-trail-with-miles.js (fetches DEM elevation from Open-Meteo)
 ├── worker/                 # Cloudflare Worker backend
 │   ├── src/                # Worker ES modules
 │   ├── wrangler.toml       # Worker configuration
@@ -68,6 +70,7 @@ npm run dev              # Run both frontend and worker locally
 npm run dev:frontend     # Frontend only (lite-server on :3000)
 npm run dev:worker       # Worker only (wrangler dev on :8788)
 npm run deploy:worker    # Deploy worker to Cloudflare
+node scripts/build-trail-data.js  # Regenerate AT trail data with DEM elevation
 ```
 
 `js/config.js` auto-detects `localhost` and points API calls to the local worker.

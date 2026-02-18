@@ -4,14 +4,6 @@
     'use strict';
 
     /**
-     * Check if current device is mobile
-     * @returns {boolean} True if mobile device
-     */
-    function isMobile() {
-        return Utils.isMobile();
-    }
-
-    /**
      * Get base tooltip configuration
      * @returns {Object} Tooltip configuration object
      */
@@ -40,7 +32,7 @@
      * @returns {Object} Font configuration object
      */
     function getBaseFontConfig(mobileSize = 10, desktopSize = 12) {
-        const mobile = isMobile();
+        const mobile = Utils.isMobile();
         return {
             family: "'Cabin', sans-serif",
             size: mobile ? mobileSize : desktopSize
@@ -56,7 +48,7 @@
      * @returns {Object} X-axis ticks configuration
      */
     function getXTicksConfig(labels, options = {}) {
-        const mobile = isMobile();
+        const mobile = Utils.isMobile();
         const { showGrid = false, maxRotation = 0 } = options;
         
         const config = {
@@ -95,7 +87,7 @@
      * @returns {Object} Y-axis ticks configuration
      */
     function getYTicksConfig(callback, options = {}) {
-        const mobile = isMobile();
+        const mobile = Utils.isMobile();
         return {
             font: getBaseFontConfig(10, 12),
             color: 'var(--text-dark)',
@@ -131,7 +123,7 @@
             xAxisOptions = {}
         } = options;
 
-        const mobile = isMobile();
+        const mobile = Utils.isMobile();
         const finalAspectRatio = mobile ? aspectRatioMobile : aspectRatio;
 
         const tooltipConfig = getBaseTooltipConfig();

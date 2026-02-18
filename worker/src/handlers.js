@@ -1,14 +1,12 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
-import { validateEnvVars, buildKmlUrl, buildKmlFetchOptions } from './utils.js';
+import { validateEnvOrError, buildKmlUrl, buildKmlFetchOptions } from './utils.js';
 import { getMockData } from './mock.js';
 import { parseKmlPoints } from './kml.js';
 import { calculateStats } from './stats.js';
 import { loadHistoricalPoints, storePointsByDay } from './storage.js';
-import { fetchWeather } from './weather.js';
+import { fetchWeatherCached } from './weather.js';
 import { TOTAL_TRAIL_MILES, DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
-import { tagPointsOnOffTrail } from './trail-proximity.js';
-import { AT_TRAIL_COORDS } from './at-trail-simplified.js';
-import { snapPointsToTrail } from './trail-distance.js';
+import { tagAndSnapPoints } from './trail-distance.js';
 
 // Stats handler — reads points from KV only (cron handles KML polling)
 export async function handleStats(request, env) {
@@ -16,68 +14,46 @@ export async function handleStats(request, env) {
   const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
 
   if (USE_MOCK_DATA) {
-    const validationErrors = validateEnvVars(env, false);
-    if (validationErrors.length > 0) {
-      return createErrorResponse(500, validationErrors.join('; '), request, {
-        'Cache-Control': 'no-cache'
-      });
-    }
+    const envError = validateEnvOrError(env, request, false);
+    if (envError) return envError;
     const mockData = getMockData(START_DATE_STR);
     return createSuccessResponse(mockData, request, {
       'Cache-Control': 'public, max-age=300'
     });
   }
 
-  const validationErrors = validateEnvVars(env, true);
-  if (validationErrors.length > 0) {
-    return createErrorResponse(500, validationErrors.join('; '), request, {
-      'Cache-Control': 'no-cache'
-    });
+  const envError = validateEnvOrError(env, request, true);
+  if (envError) return envError;
+
+  // Short-circuit with KV-cached stats to avoid recomputation on burst requests
+  if (env.TRAIL_HISTORY) {
+    try {
+      const cached = await env.TRAIL_HISTORY.get('cache:stats', 'json');
+      if (cached && Date.now() - cached.timestamp < 60000) {
+        return createSuccessResponse(cached.data, request, { 'Cache-Control': 'public, max-age=60' });
+      }
+    } catch (_) {}
   }
 
   try {
     const allPoints = await loadHistoricalPoints(START_DATE_STR, env);
 
-    // Tag points as on/off trail and filter for stats
+    // Tag points as on/off trail and snap to trail in a single pass
     const parsed = parseFloat(env.OFF_TRAIL_THRESHOLD);
     const thresholdMiles = Number.isFinite(parsed) ? parsed : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
-    tagPointsOnOffTrail(allPoints, AT_TRAIL_COORDS, thresholdMiles);
-    snapPointsToTrail(allPoints);
+    tagAndSnapPoints(allPoints, undefined, thresholdMiles);
 
     const stats = calculateStats(allPoints, START_DATE_STR, TOTAL_TRAIL_MILES, { filterOffTrail: true });
-
-    const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
     let weather = null;
     let location = null;
     if (allPoints.length > 0) {
       const currentPoint = allPoints[allPoints.length - 1];
       location = { lat: currentPoint.lat, lon: currentPoint.lon };
-
-      // Try KV cache first to avoid rate-limiting Open-Meteo
-      let usedCache = false;
-      if (env.TRAIL_HISTORY) {
-        try {
-          const cachedJson = await env.TRAIL_HISTORY.get('cache:weather');
-          if (cachedJson) {
-            const cached = JSON.parse(cachedJson);
-            if (Date.now() - cached.timestamp < WEATHER_CACHE_TTL_MS) {
-              weather = cached.weather;
-              usedCache = true;
-            }
-          }
-        } catch (_) {}
-      }
-
-      if (!usedCache) {
-        try {
-          weather = await fetchWeather(currentPoint.lat, currentPoint.lon);
-          if (env.TRAIL_HISTORY) {
-            await env.TRAIL_HISTORY.put('cache:weather', JSON.stringify({ weather, timestamp: Date.now() }));
-          }
-        } catch (error) {
-          console.error('[Worker] Weather fetch failed:', error.message);
-        }
+      try {
+        weather = await fetchWeatherCached(currentPoint.lat, currentPoint.lon, env);
+      } catch (error) {
+        console.error('[Handler] Weather fetch failed:', error.message);
       }
     }
 
@@ -86,6 +62,13 @@ export async function handleStats(request, env) {
       location: location,
       weather: weather
     };
+
+    // Cache computed stats for 60s to avoid re-running O(N×M) trail computation
+    if (env.TRAIL_HISTORY) {
+      try {
+        await env.TRAIL_HISTORY.put('cache:stats', JSON.stringify({ data: response, timestamp: Date.now() }), { expirationTtl: 300 });
+      } catch (_) {}
+    }
 
     return createSuccessResponse(response, request, {
       'Cache-Control': 'public, max-age=300'

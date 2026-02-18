@@ -16,7 +16,9 @@ async function checkRateLimit(ip, env) {
     if (count >= AUTH_RATE_LIMIT.maxAttempts) {
       return { limited: true, retryAfter: Math.ceil((resetAt - Date.now()) / 1000) };
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('[Auth] Failed to check rate limit:', error);
+  }
   return { limited: false };
 }
 
@@ -35,12 +37,18 @@ async function recordFailedAttempt(ip, env) {
     await env.TRAIL_HISTORY.put(key, JSON.stringify({ count, resetAt }), {
       expirationTtl: Math.ceil((resetAt - now) / 1000)
     });
-  } catch (_) {}
+  } catch (error) {
+    console.error('[Auth] Failed to record failed attempt:', error);
+  }
 }
 
 async function clearRateLimit(ip, env) {
   if (!env.TRAIL_HISTORY || !ip) return;
-  try { await env.TRAIL_HISTORY.delete(`ratelimit:auth:${ip}`); } catch (_) {}
+  try {
+    await env.TRAIL_HISTORY.delete(`ratelimit:auth:${ip}`);
+  } catch (error) {
+    console.error('[Auth] Failed to clear rate limit:', error);
+  }
 }
 
 /**

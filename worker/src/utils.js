@@ -1,4 +1,12 @@
 import { MS_PER_DAY, DATE_REGEX } from './constants.js';
+import { createErrorResponse } from './responses.js';
+
+// Get the effective elevation for a point, preferring DEM-based trailElevation over GPS elevation.
+export function getElevation(point) {
+  if (point.trailElevation != null) return point.trailElevation;
+  if (point.elevation != null) return point.elevation;
+  return null;
+}
 
 // Helper function to get UTC date string (YYYY-MM-DD) from Date object or ISO string
 export function getUTCDateString(dateOrTime) {
@@ -45,6 +53,15 @@ export function buildKmlFetchOptions(password) {
       'Authorization': 'Basic ' + btoa(':' + password)
     }
   };
+}
+
+// Validate env vars and return an error Response if invalid, or null if OK.
+export function validateEnvOrError(env, request, requireMapshare = true) {
+  const errors = validateEnvVars(env, requireMapshare);
+  if (errors.length > 0) {
+    return createErrorResponse(500, errors.join('; '), request, { 'Cache-Control': 'no-cache' });
+  }
+  return null;
 }
 
 // Validate environment variables

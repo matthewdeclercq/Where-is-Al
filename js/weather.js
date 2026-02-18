@@ -5,8 +5,7 @@
     // Configuration
     const WeatherConfig = {
         workerUrl: Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
-        refreshInterval: Utils.getConfig('refreshIntervals.weather', 3600000),
-        enableAutoRefresh: true
+        refreshInterval: Utils.getConfig('refreshIntervals.weather', 3600000)
     };
 
     // Module state
@@ -17,6 +16,7 @@
         backoffDelay: 0
     };
     let weatherChart = null; // Chart.js instance
+    let weatherSection = null; // Cached DOM element
 
     /**
      * Get weather icon class based on condition
@@ -167,6 +167,32 @@
     }
 
     /**
+     * Apply mobile-responsive options to an existing weather chart.
+     * Used by both updateForecast (data refresh) and updateChartForScreenSize (resize).
+     */
+    function applyMobileOptions(chart, labels) {
+        const isMobile = Utils.isMobile();
+        chart.options.aspectRatio = isMobile ? 1.8 : 3.2;
+        chart.options.plugins.legend.labels.padding = isMobile ? 10 : 15;
+        chart.options.plugins.legend.labels.font.size = isMobile ? 12 : 14;
+        chart.options.scales.x.ticks.font = function(context) {
+            const label = labels[context.index];
+            return {
+                family: "'Cabin', sans-serif",
+                size: isMobile ? 10 : 12,
+                weight: label === 'Today' ? 700 : 600
+            };
+        };
+        chart.options.scales.x.ticks.padding = isMobile ? 5 : 10;
+        chart.options.scales.x.ticks.color = function(context) {
+            const label = labels[context.index];
+            return label === 'Today' ? '#1e3a0f' : 'var(--earth-brown-dark)';
+        };
+        chart.options.scales.y.ticks.font.size = isMobile ? 10 : 12;
+        chart.options.scales.y.ticks.padding = isMobile ? 5 : 10;
+    }
+
+    /**
      * Update forecast display with line chart
      */
     function updateForecast(weather) {
@@ -295,10 +321,6 @@
 
         // Update existing chart or create new one
         if (weatherChart) {
-            // Recalculate mobile state for update
-            const isMobile = Utils.isMobile();
-            
-            // Update existing chart
             weatherChart.data.labels = labels;
             weatherChart.data.datasets[0].data = highTemps;
             weatherChart.data.datasets[1].data = lowTemps;
@@ -310,24 +332,7 @@
             weatherChart.data.datasets[1].hidden = false;
             weatherChart.options.scales.y.min = yAxisMin;
             weatherChart.options.scales.y.max = yAxisMax;
-            weatherChart.options.aspectRatio = isMobile ? 1.8 : 3.2;
-            weatherChart.options.plugins.legend.labels.padding = isMobile ? 10 : 15;
-            weatherChart.options.plugins.legend.labels.font.size = isMobile ? 12 : 14;
-            weatherChart.options.scales.x.ticks.font = function(context) {
-                const label = labels[context.index];
-                return {
-                    family: "'Cabin', sans-serif",
-                    size: isMobile ? 10 : 12,
-                    weight: label === 'Today' ? 700 : 600
-                };
-            };
-            weatherChart.options.scales.x.ticks.padding = isMobile ? 5 : 10;
-            weatherChart.options.scales.x.ticks.color = function(context) {
-                const label = labels[context.index];
-                return label === 'Today' ? '#1e3a0f' : 'var(--earth-brown-dark)';
-            };
-            weatherChart.options.scales.y.ticks.font.size = isMobile ? 10 : 12;
-            weatherChart.options.scales.y.ticks.padding = isMobile ? 5 : 10;
+            applyMobileOptions(weatherChart, labels);
 
             // Store iconData on chart instance for plugin access
             weatherChart.iconData = iconData;
@@ -363,7 +368,7 @@
             showWeatherPlaceholder('No data received from server.');
             return;
         }
-        
+
         if (!data.weather) {
             if (!data.location) {
                 showWeatherPlaceholder('Weather data will appear here once Al\'s location is available.');
@@ -374,7 +379,6 @@
         }
 
         // Show the weather section
-        const weatherSection = document.querySelector('.weather-section');
         if (weatherSection) {
             weatherSection.style.display = 'block';
         }
@@ -395,8 +399,6 @@
      * Show placeholder when weather data is unavailable
      */
     function showWeatherPlaceholder(message) {
-        // Show the weather section even if no data
-        const weatherSection = document.querySelector('.weather-section');
         if (weatherSection) {
             weatherSection.style.display = 'block';
             const placeholder = weatherSection.querySelector('.weather-placeholder');
@@ -413,7 +415,6 @@
      * Hide placeholder
      */
     function hideWeatherPlaceholder() {
-        const weatherSection = document.querySelector('.weather-section');
         if (weatherSection) {
             const placeholder = weatherSection.querySelector('.weather-placeholder');
             if (placeholder) {
@@ -446,7 +447,6 @@
         }
 
         // Show the weather section while loading
-        const weatherSection = document.querySelector('.weather-section');
         if (weatherSection) {
             weatherSection.style.display = 'block';
         }
@@ -491,9 +491,7 @@
      * Setup automatic refresh
      */
     function setupAutoRefresh() {
-        if (WeatherConfig.enableAutoRefresh) {
-            window.ApiClient.setupAutoRefresh(fetchWeather, WeatherConfig.refreshInterval, state);
-        }
+        window.ApiClient.setupAutoRefresh(fetchWeather, WeatherConfig.refreshInterval, state);
     }
 
     /**
@@ -508,27 +506,7 @@
      */
     function updateChartForScreenSize() {
         if (!weatherChart) return;
-
-        const isMobile = Utils.isMobile();
-        const labels = weatherChart.data.labels || [];
-
-        // Update chart options based on screen size
-        weatherChart.options.aspectRatio = isMobile ? 1.8 : 3.2;
-        weatherChart.options.plugins.legend.labels.padding = isMobile ? 10 : 15;
-        weatherChart.options.plugins.legend.labels.font.size = isMobile ? 12 : 14;
-        weatherChart.options.scales.x.ticks.font = function(context) {
-            const label = labels[context.index];
-            return {
-                family: "'Cabin', sans-serif",
-                size: isMobile ? 10 : 12,
-                weight: label === 'Today' ? 700 : 600
-            };
-        };
-        weatherChart.options.scales.x.ticks.padding = isMobile ? 5 : 10;
-        weatherChart.options.scales.y.ticks.font.size = isMobile ? 10 : 12;
-        weatherChart.options.scales.y.ticks.padding = isMobile ? 5 : 10;
-
-        // Update the chart
+        applyMobileOptions(weatherChart, weatherChart.data.labels || []);
         weatherChart.update('none'); // 'none' mode for smoother resize without animation
     }
 
@@ -569,13 +547,9 @@
      * Initialize weather module
      */
     function initializeWeather() {
-        // Fetch weather immediately on page load
+        weatherSection = document.querySelector('.weather-section');
         fetchWeather();
-
-        // Setup automatic refresh
-        if (WeatherConfig.enableAutoRefresh) {
-            setupAutoRefresh();
-        }
+        setupAutoRefresh();
     }
 
     /**

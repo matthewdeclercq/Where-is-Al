@@ -25,6 +25,25 @@
     }
 
     /**
+     * Invoke all pending callbacks for a URL, then clean up pending state.
+     */
+    function invokeCallbacks(url, success, dataOrError) {
+        const allCallbacks = pendingCallbacks.get(url) || [];
+        pendingCallbacks.delete(url);
+        pendingRequests.delete(url);
+        const method = success ? 'onSuccess' : 'onError';
+        allCallbacks.forEach((cb) => {
+            if (cb && cb[method]) {
+                try {
+                    cb[method](dataOrError);
+                } catch (callbackError) {
+                    console.error(`[ApiClient] Error in ${method} callback:`, callbackError);
+                }
+            }
+        });
+    }
+
+    /**
      * Shared API Client
      */
     const ApiClient = {
@@ -89,24 +108,11 @@
                     if (!token) {
                         const error = new Error('[ApiClient] Not authenticated - no token found');
                         state.isLoading = false;
-                        // Clean up callbacks and pending request
-                        const allCallbacks = pendingCallbacks.get(url) || [callbacks];
-                        pendingCallbacks.delete(url);
-                        pendingRequests.delete(url);
-                        // Call all error callbacks
-                        allCallbacks.forEach((cb) => {
-                            if (cb && cb.onError) {
-                                try {
-                                    cb.onError(error);
-                                } catch (callbackError) {
-                                    console.error('Error in onError callback:', callbackError);
-                                }
-                            }
-                        });
+                        invokeCallbacks(url, false, error);
                         rejectPromise(error);
                         return;
                     }
-                    
+
                     // Check token expiry
                     const expires = sessionStorage.getItem('auth_expires');
                     if (expires && Date.now() >= parseInt(expires)) {
@@ -115,20 +121,7 @@
                         sessionStorage.removeItem('auth_expires');
                         const error = new Error('[ApiClient] Token expired - please re-authenticate');
                         state.isLoading = false;
-                        // Clean up callbacks and pending request
-                        const allCallbacks = pendingCallbacks.get(url) || [callbacks];
-                        pendingCallbacks.delete(url);
-                        pendingRequests.delete(url);
-                        // Call all error callbacks
-                        allCallbacks.forEach((cb) => {
-                            if (cb && cb.onError) {
-                                try {
-                                    cb.onError(error);
-                                } catch (callbackError) {
-                                    console.error('Error in onError callback:', callbackError);
-                                }
-                            }
-                        });
+                        invokeCallbacks(url, false, error);
                         rejectPromise(error);
                         return;
                     }
@@ -165,22 +158,8 @@
                         // Success - reset error count and backoff
                         state.errorCount = 0;
                         state.backoffDelay = 0;
-
-                        // Get all callbacks for this URL (may be multiple if requests were deduplicated)
-                        const allCallbacks = pendingCallbacks.get(url) || [callbacks];
-                        
-                        // Call all success callbacks
-                        allCallbacks.forEach((cb) => {
-                            if (cb && cb.onSuccess) {
-                                try {
-                                    cb.onSuccess(data);
-                                } catch (callbackError) {
-                                    console.error('Error in onSuccess callback:', callbackError);
-                                    // Don't throw - continue with other callbacks
-                                }
-                            }
-                        });
-
+                        state.isLoading = false;
+                        invokeCallbacks(url, true, data);
                         resolvePromise(data);
                     } catch (error) {
                         clearTimeout(timeoutId);
@@ -189,38 +168,20 @@
                         const maxDelay = window.Config ? window.Config.backoff.maxDelay : 300000;
                         const initialDelay = window.Config ? window.Config.backoff.initialDelay : 1000;
                         state.backoffDelay = Math.min(Math.pow(2, state.errorCount - 1) * initialDelay, maxDelay);
-                        
-                        const errorMessage = error.name === 'AbortError' 
+
+                        const errorMessage = error.name === 'AbortError'
                             ? `Request timeout after ${timeoutMs}ms`
                             : error.message;
                         console.warn(`[ApiClient] API fetch failed (attempt ${state.errorCount}), retrying in ${state.backoffDelay}ms:`, errorMessage);
-                        
-                        // Get all callbacks for this URL (may be multiple if requests were deduplicated)
-                        const allCallbacks = pendingCallbacks.get(url) || [callbacks];
-                        
-                        // Call all error callbacks
-                        allCallbacks.forEach((cb) => {
-                            if (cb && cb.onError) {
-                                try {
-                                    cb.onError(error);
-                                } catch (callbackError) {
-                                    console.error('Error in onError callback:', callbackError);
-                                }
-                            }
-                        });
-                        
-                        rejectPromise(error);
-                    } finally {
+
                         state.isLoading = false;
-                        // Clean up callbacks and pending request in finally to ensure cleanup
-                        pendingCallbacks.delete(url);
-                        pendingRequests.delete(url);
+                        invokeCallbacks(url, false, error);
+                        rejectPromise(error);
                     }
                 } catch (error) {
                     // Handle any errors in the outer async function
                     state.isLoading = false;
-                    pendingCallbacks.delete(url);
-                    pendingRequests.delete(url);
+                    invokeCallbacks(url, false, error);
                     rejectPromise(error);
                 }
             })();

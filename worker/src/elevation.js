@@ -1,9 +1,10 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
 import { getMockElevationData, getMockElevationDays } from './mock.js';
 import { calculateElevationStats } from './stats.js';
+import { getElevation } from './utils.js';
 import { DATE_REGEX } from './constants.js';
 
-const hasElevationData = p => p.trailElevation != null || p.elevation != null;
+const hasElevationData = p => getElevation(p) !== null;
 
 // Elevation handler
 export async function handleElevation(request, env) {
@@ -80,7 +81,7 @@ export async function handleElevationDays(request, env) {
           return dayPoints.some(hasElevationData) ? dateStr : null;
         }
       } catch (error) {
-        console.error(`[Worker] Failed to read ${key.name}:`, error);
+        console.error(`[Elevation] Failed to read ${key.name}:`, error);
       }
       return null;
     });
@@ -118,7 +119,7 @@ export async function getElevationByDay(dateStr, env) {
       .filter(hasElevationData)
       .map(p => ({
         time: p.time,
-        elevation: Math.round((p.trailElevation != null ? p.trailElevation : p.elevation) * 10) / 10
+        elevation: Math.round(getElevation(p) * 10) / 10
       }))
       .sort((a, b) => new Date(a.time) - new Date(b.time));
 
@@ -141,7 +142,7 @@ export async function getElevationByDay(dateStr, env) {
       verticalLoss
     };
   } catch (error) {
-    console.error(`[Worker] Failed to get elevation data for ${dateStr}:`, error);
+    console.error(`[Elevation] Failed to get elevation data for ${dateStr}:`, error);
     return { points: [], minElevation: null, maxElevation: null, verticalClimbed: null, verticalLoss: null, date: dateStr };
   }
 }

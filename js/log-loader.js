@@ -10,20 +10,6 @@
         return await response.text();
     }
 
-    async function loadLogEntry(containerSelector, filePath) {
-        const container = document.querySelector(containerSelector);
-        if (!container) return false;
-
-        try {
-            const html = await fetchHTML(filePath);
-            container.insertAdjacentHTML('beforeend', html);
-            return true;
-        } catch (error) {
-            console.warn(`Failed to load ${filePath}:`, error);
-            return false;
-        }
-    }
-
     async function loadLogEntries() {
         const logGrid = document.getElementById('log-grid');
         if (!logGrid) return;

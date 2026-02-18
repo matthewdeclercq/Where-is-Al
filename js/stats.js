@@ -5,8 +5,7 @@
     // Configuration
     const StatsConfig = {
         workerUrl: Utils.getConfig('workerUrl', 'https://where-is-al.matthew-declercq.workers.dev/'),
-        refreshInterval: Utils.getConfig('refreshIntervals.stats', 3600000),
-        enableAutoRefresh: true
+        refreshInterval: Utils.getConfig('refreshIntervals.stats', 3600000)
     };
 
     // Module state
@@ -155,9 +154,7 @@
      * Setup automatic refresh
      */
     function setupAutoRefresh() {
-        if (StatsConfig.enableAutoRefresh) {
-            window.ApiClient.setupAutoRefresh(fetchStats, StatsConfig.refreshInterval, state);
-        }
+        window.ApiClient.setupAutoRefresh(fetchStats, StatsConfig.refreshInterval, state);
     }
 
     /**
@@ -171,13 +168,8 @@
      * Initialize stats module
      */
     function initializeStats() {
-        // Fetch stats immediately on page load
         fetchStats();
-
-        // Setup automatic refresh
-        if (StatsConfig.enableAutoRefresh) {
-            setupAutoRefresh();
-        }
+        setupAutoRefresh();
     }
 
     /**
