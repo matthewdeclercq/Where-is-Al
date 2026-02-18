@@ -1,0 +1,289 @@
+[
+    {
+        "name": "Shenanigans Irish Pub",
+        "description": "Local Irish pub serving fried chicken plate",
+        "state": "Georgia",
+        "lat": 34.532,
+        "lon": -84.009
+    },
+    {
+        "name": "Bigg Daddys Restaurant",
+        "description": "Local restaurant and tavern with fried chicken dinners",
+        "state": "Georgia",
+        "lat": 34.701,
+        "lon": -83.728
+    },
+    {
+        "name": "Muller's Famous Fried Chicken",
+        "description": "Local spot famous for fried chicken",
+        "state": "Georgia",
+        "lat": 34.701,
+        "lon": -83.728
+    },
+    {
+        "name": "Daniel's Steakhouse",
+        "description": "Southern buffet with standout fried chicken and sides",
+        "state": "Georgia",
+        "lat": 34.879,
+        "lon": -83.757
+    },
+    {
+        "name": "Papa's Pizza & Subs",
+        "description": "Local pizza and subs spot with fried chicken specials",
+        "state": "Georgia",
+        "lat": 34.945,
+        "lon": -83.757
+    },
+    {
+        "name": "The Factory Diner",
+        "description": "Local diner serving fried chicken",
+        "state": "North Carolina",
+        "lat": 35.182,
+        "lon": -83.382
+    },
+    {
+        "name": "Everett Street Diner",
+        "description": "Local diner with fried chicken biscuits and gravy",
+        "state": "North Carolina",
+        "lat": 35.431,
+        "lon": -83.447
+    },
+    {
+        "name": "Smoky Mountain Diner",
+        "description": "Classic local diner with crispy Southern fried chicken",
+        "state": "North Carolina",
+        "lat": 35.892,
+        "lon": -82.830
+    },
+    {
+        "name": "Iron Horse Station",
+        "description": "Historic local restaurant with fried chicken special",
+        "state": "North Carolina",
+        "lat": 35.892,
+        "lon": -82.828
+    },
+    {
+        "name": "Lynn's Place Restaurant",
+        "description": "Family-owned local restaurant with fried chicken",
+        "state": "North Carolina",
+        "lat": 35.322,
+        "lon": -83.807
+    },
+    {
+        "name": "Clarion Ridge Restaurant",
+        "description": "Local restaurant serving fried chicken in Erwin",
+        "state": "Tennessee",
+        "lat": 36.143,
+        "lon": -82.417
+    },
+    {
+        "name": "Mojo's Trailside Café",
+        "description": "Trailside local cafe with fried chicken nights",
+        "state": "Virginia",
+        "lat": 36.634,
+        "lon": -81.784
+    },
+    {
+        "name": "Wicked Chicken Winghouse & Tavern",
+        "description": "Local tavern offering fried chicken options",
+        "state": "Virginia",
+        "lat": 36.634,
+        "lon": -81.784
+    },
+    {
+        "name": "Hellbender's Cafe",
+        "description": "Local cafe serving fried chicken legs with sides",
+        "state": "Virginia",
+        "lat": 36.634,
+        "lon": -81.784
+    },
+    {
+        "name": "MacArthur Inn Restaurant",
+        "description": "Historic inn restaurant with home-style fried chicken",
+        "state": "Virginia",
+        "lat": 37.330,
+        "lon": -80.810
+    },
+    {
+        "name": "Keystone Restaurant",
+        "description": "Home-style local diner with always-available fried chicken",
+        "state": "Virginia",
+        "lat": 37.050,
+        "lon": -81.100
+    },
+    {
+        "name": "The Homeplace Restaurant",
+        "description": "Legendary family-style AYCE fried chicken",
+        "state": "Virginia",
+        "lat": 37.383,
+        "lon": -80.109
+    },
+    {
+        "name": "Chicken Coop",
+        "description": "Local roadside spot known for excellent Southern fried chicken",
+        "state": "Virginia",
+        "lat": 38.067,
+        "lon": -78.678
+    },
+    {
+        "name": "Mrs. Rowe's Restaurant & Bakery",
+        "description": "Iconic local Southern restaurant with fried chicken",
+        "state": "Virginia",
+        "lat": 38.068,
+        "lon": -78.890
+    },
+    {
+        "name": "Spelunker's Frozen Custard & Grill",
+        "description": "Local grill with fried chicken sandwiches",
+        "state": "Virginia",
+        "lat": 38.917,
+        "lon": -78.195
+    },
+    {
+        "name": "Cannonball Deli",
+        "description": "Local deli with fried chicken",
+        "state": "West Virginia",
+        "lat": 39.323,
+        "lon": -77.729
+    },
+    {
+        "name": "Kelley Farm Kitchen",
+        "description": "Farm-to-table local spot with fried chicken",
+        "state": "West Virginia",
+        "lat": 39.325,
+        "lon": -77.739
+    },
+    {
+        "name": "Old South Mountain Inn",
+        "description": "Historic local inn with comfort fried chicken",
+        "state": "Maryland",
+        "lat": 39.485,
+        "lon": -77.652
+    },
+    {
+        "name": "The Pub at Doyle Hotel",
+        "description": "Historic local pub with fried chicken",
+        "state": "Pennsylvania",
+        "lat": 40.398,
+        "lon": -77.029
+    },
+    {
+        "name": "Blue Mountain Restaurant",
+        "description": "Local mountain restaurant serving fried chicken",
+        "state": "Pennsylvania",
+        "lat": 40.580,
+        "lon": -76.025
+    },
+    {
+        "name": "Sycamore Grille",
+        "description": "Local grille serving fried chicken",
+        "state": "Pennsylvania",
+        "lat": 40.983,
+        "lon": -75.140
+    },
+    {
+        "name": "The Daily Bean",
+        "description": "Local cafe offering fried chicken sandwich",
+        "state": "New Jersey",
+        "lat": 41.200,
+        "lon": -74.485
+    },
+    {
+        "name": "Bear Mountain Inn Restaurant",
+        "description": "Historic local inn restaurant",
+        "state": "New York",
+        "lat": 41.310,
+        "lon": -73.990
+    },
+    {
+        "name": "Fife n Drum Restaurant",
+        "description": "Local restaurant serving fried chicken",
+        "state": "Connecticut",
+        "lat": 41.724,
+        "lon": -73.477
+    },
+    {
+        "name": "Kingsley Tavern",
+        "description": "Local tavern with fried chicken",
+        "state": "Connecticut",
+        "lat": 41.724,
+        "lon": -73.477
+    },
+    {
+        "name": "Gypsy Joint Café",
+        "description": "Local cafe with fried chicken",
+        "state": "Massachusetts",
+        "lat": 42.196,
+        "lon": -73.362
+    },
+    {
+        "name": "Trail House Kitchen",
+        "description": "Local trail-oriented kitchen",
+        "state": "Massachusetts",
+        "lat": 42.473,
+        "lon": -73.133
+    },
+    {
+        "name": "Hop'n Moose Pub",
+        "description": "Local pub serving fried chicken",
+        "state": "Vermont",
+        "lat": 43.609,
+        "lon": -72.972
+    },
+    {
+        "name": "Lou's Restaurant & Bakery",
+        "description": "Classic local restaurant and bakery",
+        "state": "New Hampshire",
+        "lat": 43.702,
+        "lon": -72.289
+    },
+    {
+        "name": "Libby's Bistro",
+        "description": "Local bistro with fried chicken",
+        "state": "New Hampshire",
+        "lat": 44.387,
+        "lon": -71.188
+    },
+    {
+        "name": "Mr. Pizza",
+        "description": "Local pizza spot with fried chicken baskets",
+        "state": "New Hampshire",
+        "lat": 44.387,
+        "lon": -71.188
+    },
+    {
+        "name": "Furbish Brew House & Eats",
+        "description": "Local brew house with fried chicken eats",
+        "state": "Maine",
+        "lat": 44.966,
+        "lon": -70.642
+    },
+    {
+        "name": "Coplin Dinner House",
+        "description": "Local dinner house serving fried chicken",
+        "state": "Maine",
+        "lat": 45.140,
+        "lon": -70.310
+    },
+    {
+        "name": "Lakeshore House",
+        "description": "Local lakeshore restaurant with fried chicken",
+        "state": "Maine",
+        "lat": 45.286,
+        "lon": -69.589
+    },
+    {
+        "name": "Pie Lady Café",
+        "description": "Local cafe with fried chicken nights",
+        "state": "Maine",
+        "lat": 45.286,
+        "lon": -69.589
+    },
+    {
+        "name": "Appalachian Trail Cafe",
+        "description": "Local cafe with fried chicken plates",
+        "state": "Maine",
+        "lat": 45.657,
+        "lon": -68.711
+    }
+]

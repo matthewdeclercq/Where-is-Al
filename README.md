@@ -5,7 +5,7 @@ A website for tracking Al's Appalachian Trail thru-hike adventure. Deployed at [
 ## Features
 
 - Password-protected access (server-side authentication via Cloudflare Worker)
-- Live map (Garmin inReach MapShare integration)
+- Interactive Leaflet map with color-coded on/off-trail GPS points and AT route overlay
 - Trail statistics dashboard (miles completed, daily distance, pace, estimated finish)
 - Weather forecast at Al's current location
 - Elevation profile by day
@@ -35,7 +35,7 @@ Where-is-Al/
 │   ├── stats.js            # Trail statistics module
 │   ├── weather.js          # Weather display module
 │   ├── elevation.js        # Elevation profile module
-│   ├── map.js              # Garmin MapShare integration
+│   ├── map.js              # Interactive Leaflet map module
 │   └── log-loader.js       # Loads log entries from manifest
 ├── log-entries/
 │   ├── manifest.json       # List of log entry filenames
@@ -100,13 +100,6 @@ node scripts/build-trail-data.js  # Regenerate AT trail data with DEM elevation
 Password validation is server-side in the Cloudflare Worker:
 ```bash
 cd worker && npx wrangler secret put SITE_PASSWORD
-```
-
-### Configure Garmin MapShare
-
-Edit `js/map.js` and set `mapShareUrl`:
-```javascript
-mapShareUrl: "https://share.garmin.com/YourMapShareName"
 ```
 
 ## Deployment

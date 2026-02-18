@@ -34,6 +34,7 @@
     let mapSection = null;
     let trailLayer = null;
     let milestonesLayer = null;
+    let chickenLayer = null;
     let pointsLayer = null;
     let routeLineLayer = null;
     let currentMarker = null;
@@ -154,6 +155,7 @@
         // Load trail and milestones in parallel, then fetch points
         loadTrailData();
         loadMilestones();
+        loadChicken();
         fetchPoints();
 
         // Setup auto-refresh
@@ -233,6 +235,39 @@
             })
             .catch(function(error) {
                 console.error('[Map] Failed to load milestones:', error);
+            });
+    }
+
+    function loadChicken() {
+        fetch('data/chicken.json')
+            .then(function(response) {
+                if (!response.ok) throw new Error('Failed to load chicken places');
+                return response.json();
+            })
+            .then(function(chickenPlaces) {
+                chickenLayer = L.layerGroup();
+
+                chickenPlaces.forEach(function(cp) {
+                    var icon = L.divIcon({
+                        className: 'chicken-icon',
+                        html: '<i class="fas fa-drumstick-bite" style="color: #c2410c;"></i>',
+                        iconSize: [26, 26],
+                        iconAnchor: [13, 13]
+                    });
+
+                    var popupContent = '<strong>' + cp.name + '</strong>' +
+                        '<div class="popup-state">' + cp.state + '</div>' +
+                        '<div>' + cp.description + '</div>';
+
+                    L.marker([cp.lat, cp.lon], { icon: icon })
+                        .bindPopup(popupContent, { maxWidth: 250 })
+                        .addTo(chickenLayer);
+                });
+
+                chickenLayer.addTo(map);
+            })
+            .catch(function(error) {
+                console.error('[Map] Failed to load chicken places:', error);
             });
     }
 

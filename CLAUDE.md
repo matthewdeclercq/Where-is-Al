@@ -75,10 +75,12 @@ Each feature module (stats, weather, elevation, map) follows this pattern:
 **Authentication Flow:**
 1. User enters password on `index.html`
 2. Password sent to Cloudflare Worker's `/auth` endpoint
-3. Worker validates and returns JWT token + expiry timestamp
-4. Token stored in `sessionStorage` (NOT localStorage for security)
-5. `main.html` has inline auth check (lines 264-277) that validates token before page loads
-6. All API requests include `Authorization: Bearer ${token}` header via `ApiClient`
+3. Worker validates password (case-insensitive), enforces IP-based rate limiting (10 attempts per 15-min window tracked in KV as `ratelimit:auth:{ip}`)
+4. On success, worker generates an opaque token (`btoa(JSON.stringify({id: uuid, expires: timestamp}))`), stores it in KV as `token:{token}` with a 24-hour TTL, and returns `{token, expires}`
+5. Token stored in `sessionStorage` (NOT localStorage for security)
+6. `main.html` has inline auth check (lines 264-277) that validates token before page loads
+7. All API requests include `Authorization: Bearer ${token}` header via `ApiClient`
+8. Worker validates token by looking it up in KV (not a JWT — server-side validation only)
 
 **Cloudflare Worker Integration:**
 - Worker URL configured in `js/config.js` (`Config.workerUrl`)
@@ -150,12 +152,16 @@ Weather and elevation modules use Chart.js for visualizations:
 - Icons positioned using absolute positioning relative to chart container
 - Plugin re-renders icons on chart update
 
-### Garmin MapShare Integration
+### Leaflet Map Integration
 
-`js/map.js` embeds Garmin inReach MapShare as an iframe:
-- `MapConfig.mapShareUrl` - Set to Garmin MapShare URL or null for placeholder
-- Map refreshes every 30 minutes (configurable)
-- Shows placeholder if MapShareUrl not configured
+`js/map.js` renders an interactive Leaflet map using OpenTopoMap tiles:
+- Fetches GPS points from the `/points` endpoint and plots them on the AT trail
+- Points are color-coded: on-trail (cyan `#06b6d4`), off-trail (orange `#f97316`)
+- Current position shown as a yellow marker (`#facc15`)
+- Full AT route drawn as a blue polyline from `at-trail-simplified.js` data
+- Milestone markers loaded from the `/points` response
+- Custom controls: fullscreen toggle and "fly to current location"
+- Map refreshes every 30 minutes (configurable via `refreshIntervals.map`)
 
 ### Trail Distance & Elevation System
 
@@ -182,6 +188,16 @@ GPS pings are snapped to the known AT trail to get accurate distance and elevati
 
 **Stored fields per point in KV:** `lat`, `lon`, `time`, `velocity`, `elevation`, `onTrail`, `trailMile`, `trailElevation`
 
+**KV key schema:**
+| Key pattern | Contents |
+|-------------|----------|
+| `points:YYYY-MM-DD` | JSON array of serialized GPS points for that day |
+| `meta:latest_timestamp` | ISO timestamp of the most recent stored ping |
+| `cache:weather` | `{weather, timestamp}` — cached Open-Meteo response (12-hour TTL) |
+| `cache:stats` | `{data, timestamp}` — cached stats response (60-second TTL) |
+| `token:{token}` | `{expires}` — valid auth tokens (24-hour TTL) |
+| `ratelimit:auth:{ip}` | `{count, resetAt}` — failed auth attempt counters (15-min window) |
+
 ## Common Development Tasks
 
 ### Adding a Log Entry
@@ -203,13 +219,6 @@ GPS pings are snapped to the known AT trail to get accurate distance and elevati
 ```
 
 2. Add filename to `log-entries/manifest.json` (newest first)
-
-### Configuring Garmin MapShare
-
-Edit `js/map.js` line 10:
-```javascript
-mapShareUrl: "https://share.garmin.com/YourMapShareName"
-```
 
 ### Changing the Password
 
@@ -248,8 +257,8 @@ The Cloudflare Worker lives in `worker/` and is split into ES modules under `wor
 | `kml.js` | KML parser |
 | `geo.js` | Haversine distance, segment projection (`projectToSegment`) |
 | `stats.js` | Trail statistics calculator (uses trail-mile deltas) |
-| `storage.js` | KV read/write, point serialization (`serializePoint`) |
-| `weather.js` | Open-Meteo weather API; `fetchWeatherCached()` wraps `fetchWeather()` with 30-minute KV cache |
+| `storage.js` | KV read/write, point serialization (`serializePoint`); `deduplicateStationary()` collapses consecutive pings within 100ft into one annotated point (`stationaryPings`, `lastPingTime`) |
+| `weather.js` | Open-Meteo weather API; `fetchWeatherCached()` wraps `fetchWeather()` with 12-hour KV cache; serves stale cache on error to prevent rate-limit spirals |
 | `elevation.js` | `/elevation` endpoint handlers (prefers DEM elevation) |
 | `handlers.js` | `/` and `/sync` endpoint handlers; stats response is KV-cached for 60s to avoid redundant trail computation |
 | `points-handler.js` | `/points` endpoint handler |
