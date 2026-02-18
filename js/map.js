@@ -5,11 +5,8 @@
     const MapConfig = {
         refreshInterval: Utils.getConfig('refreshIntervals.map', 1800000),
         workerUrl: Utils.getConfig('workerUrl', ''),
-        tileUrl: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-        tileAttribution: 'Map data: &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors, ' +
-            '<a href="http://viewfinderpanoramas.org">SRTM</a> | ' +
-            'Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> ' +
-            '(<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+        tileUrl: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+        tileAttribution: 'Map data: <a href="https://www.usgs.gov/">U.S. Geological Survey</a>',
         trailColor: '#1e40af',
         trailWeight: 4,
         trailOpacity: 0.85,
@@ -39,6 +36,12 @@
     let routeLineLayer = null;
     let currentMarker = null;
     let hasInitiallyFocused = false;
+    let preFullscreenRect = null;
+    let isFullscreenAnimating = false;
+
+    function clipInset(t, r, b, l, radius) {
+        return 'inset(' + t + 'px ' + r + 'px ' + b + 'px ' + l + 'px round ' + radius + ')';
+    }
 
     function createMapControl(options) {
         var Control = L.Control.extend({
@@ -90,36 +93,99 @@
 
     function toggleFullscreen(button) {
         var wrapper = mapSection;
-        if (!wrapper) return;
+        if (!wrapper || isFullscreenAnimating) return;
 
-        if (wrapper.classList.contains('map-fullscreen')) {
-            // Exit fullscreen
-            wrapper.classList.remove('map-fullscreen');
-            document.body.style.overflow = '';
-            button.innerHTML = '<i class="fas fa-expand"></i>';
-            button.title = 'Enter fullscreen';
-        } else {
-            // Enter fullscreen — scroll to top first so Leaflet's cached
-            // container offset doesn't cause a stale viewport calculation
+        var isFullscreen = wrapper.classList.contains('map-fullscreen');
+        var DURATION = '0.38s';
+        var EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
+        var RADIUS = '14px';
+
+        function invalidateMap() {
+            if (map) {
+                map.invalidateSize({ animate: false, pan: false });
+                setTimeout(function() {
+                    if (map) {
+                        map.invalidateSize({ animate: false, pan: false });
+                        map.fire('moveend');
+                    }
+                }, 50);
+            }
+        }
+
+        isFullscreenAnimating = true;
+
+        if (!isFullscreen) {
+            // ENTER FULLSCREEN
+            // Scroll to top first so Leaflet's cached offset is correct,
+            // then measure where the map sits in the viewport post-scroll.
             window.scrollTo(0, 0);
+            preFullscreenRect = wrapper.getBoundingClientRect();
+            var r = preFullscreenRect;
+            var startClip = clipInset(
+                r.top,
+                window.innerWidth  - r.right,
+                window.innerHeight - r.bottom,
+                r.left,
+                RADIUS
+            );
+
             wrapper.classList.add('map-fullscreen');
             document.body.style.overflow = 'hidden';
             button.innerHTML = '<i class="fas fa-compress"></i>';
             button.title = 'Exit fullscreen';
-        }
 
-        // Leaflet caches the container's page offset. After toggling
-        // position:fixed the cached offset is stale, so tiles render
-        // for the wrong viewport. Force an immediate + deferred reset.
-        if (map) {
-            map.invalidateSize({ animate: false, pan: false });
-            // Second call after the layout fully settles
-            setTimeout(function() {
-                if (map) {
-                    map.invalidateSize({ animate: false, pan: false });
-                    map.fire('moveend');
-                }
-            }, 50);
+            // Start clipped to the pre-fullscreen rect, then expand.
+            wrapper.style.clipPath = startClip;
+            wrapper.style.willChange = 'clip-path';
+            wrapper.offsetHeight; // force reflow before adding transition
+
+            wrapper.style.transition = 'clip-path ' + DURATION + ' ' + EASE;
+            wrapper.style.clipPath = clipInset(0, 0, 0, 0, '0px');
+
+            wrapper.addEventListener('transitionend', function onEnterDone(e) {
+                if (e.propertyName !== 'clip-path') return;
+                wrapper.removeEventListener('transitionend', onEnterDone);
+                wrapper.style.clipPath = '';
+                wrapper.style.transition = '';
+                wrapper.style.willChange = '';
+                isFullscreenAnimating = false;
+                invalidateMap();
+            });
+
+        } else {
+            // EXIT FULLSCREEN
+            // Animate clip-path back to the stored pre-fullscreen rect while
+            // the element is still position:fixed, then remove the class.
+            var r2 = preFullscreenRect || { top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0 };
+            var endClip = clipInset(
+                r2.top,
+                window.innerWidth  - r2.right,
+                window.innerHeight - r2.bottom,
+                r2.left,
+                RADIUS
+            );
+
+            wrapper.style.clipPath = clipInset(0, 0, 0, 0, '0px');
+            wrapper.style.willChange = 'clip-path';
+            wrapper.style.transition = 'none';
+            wrapper.offsetHeight; // force reflow
+
+            wrapper.style.transition = 'clip-path ' + DURATION + ' ' + EASE;
+            wrapper.style.clipPath = endClip;
+
+            wrapper.addEventListener('transitionend', function onExitDone(e) {
+                if (e.propertyName !== 'clip-path') return;
+                wrapper.removeEventListener('transitionend', onExitDone);
+                wrapper.classList.remove('map-fullscreen');
+                document.body.style.overflow = '';
+                wrapper.style.clipPath = '';
+                wrapper.style.transition = '';
+                wrapper.style.willChange = '';
+                isFullscreenAnimating = false;
+                button.innerHTML = '<i class="fas fa-expand"></i>';
+                button.title = 'Enter fullscreen';
+                invalidateMap();
+            });
         }
     }
 
@@ -142,8 +208,7 @@
         // Add tile layer
         L.tileLayer(MapConfig.tileUrl, {
             attribution: MapConfig.tileAttribution,
-            maxZoom: 17,
-            subdomains: 'abc'
+            maxZoom: 16
         }).addTo(map);
 
         // Add fullscreen control
@@ -184,7 +249,7 @@
     }
 
     function loadTrailData() {
-        fetch('data/at-trail.geojson')
+        fetch('data/at-trail-simplified.geojson')
             .then(function(response) {
                 if (!response.ok) throw new Error('Failed to load trail GeoJSON');
                 return response.json();
