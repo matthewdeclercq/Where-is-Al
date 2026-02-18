@@ -6,9 +6,11 @@ compatibility_date = "2024-12-01"
 port = 8788
 
 # KV Namespace binding
+# comment out remote = true to not pull current prod data
 [[kv_namespaces]]
 binding = "TRAIL_HISTORY"
 id = "f7b75c01987e46fe9ab1b7a110cb12bd"
+#remote = true
 
 # Non-secret environment variables
 [vars]
@@ -22,7 +24,7 @@ START_LON = "-84.1939"
 enabled = true
 
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["*/20 * * * *"]
 
 # Secrets (set via: npx wrangler secret put <NAME>):
 #   SITE_PASSWORD      - Password for site access (already set)

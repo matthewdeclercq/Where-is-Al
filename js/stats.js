@@ -95,6 +95,19 @@
                 updateStatElement(key, statsData[key]);
             }
         });
+
+        // Show a note when there are no pings yet today
+        const noteEl = document.getElementById('daily-distance-note');
+        if (noteEl) {
+            if (statsData.hasDataToday === false && statsData.dailyDistanceDate) {
+                const d = new Date(statsData.dailyDistanceDate + 'T00:00:00Z');
+                const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                noteEl.textContent = `From ${dateLabel} — no tracker data yet today`;
+                noteEl.style.display = 'block';
+            } else {
+                noteEl.style.display = 'none';
+            }
+        }
     }
 
     /**

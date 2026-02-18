@@ -2,9 +2,17 @@ import { haversine } from './geo.js';
 import { getUTCDateString, groupPointsByDate, calculateCurrentDay } from './utils.js';
 import {
   MOVING_VELOCITY_THRESHOLD_MPH,
-  MIN_DAY_ON_TRAIL,
-  TRAIL_CORRECTION_FACTOR
+  MIN_DAY_ON_TRAIL
 } from './constants.js';
+
+/**
+ * Get the effective elevation for a point, preferring trailElevation over GPS elevation.
+ */
+function getElevation(point) {
+  if (point.trailElevation != null) return point.trailElevation;
+  if (point.elevation != null) return point.elevation;
+  return null;
+}
 
 /**
  * Helper function to calculate elevation statistics from points array
@@ -14,8 +22,8 @@ export function calculateElevationStats(points) {
   let verticalLoss = 0;
 
   for (let i = 1; i < points.length; i++) {
-    const currElev = points[i].elevation;
-    const prevElev = points[i - 1].elevation;
+    const currElev = getElevation(points[i]);
+    const prevElev = getElevation(points[i - 1]);
     if (!Number.isFinite(currElev) || !Number.isFinite(prevElev)) continue;
     const elevationChange = currElev - prevElev;
     if (elevationChange > 0) {
@@ -34,7 +42,7 @@ export function calculateElevationStats(points) {
 /**
  * Calculate daily elevation gain for all days
  */
-function calculateDailyElevationGain(points, startDateStr) {
+function calculateDailyElevationGain(points) {
   const dailyElevationGainMap = new Map();
 
   if (points.length < 2) {
@@ -49,7 +57,7 @@ function calculateDailyElevationGain(points, startDateStr) {
       continue;
     }
 
-    const pointsWithElevation = dayPoints.filter(p => p.elevation !== null && p.elevation !== undefined);
+    const pointsWithElevation = dayPoints.filter(p => getElevation(p) !== null);
 
     if (pointsWithElevation.length < 2) {
       dailyElevationGainMap.set(dateKey, 0);
@@ -60,9 +68,9 @@ function calculateDailyElevationGain(points, startDateStr) {
     const sortedDayPoints = pointsWithElevation.sort((a, b) => a.time - b.time);
 
     for (let i = 1; i < sortedDayPoints.length; i++) {
-      const prev = sortedDayPoints[i - 1];
-      const curr = sortedDayPoints[i];
-      const elevationChange = curr.elevation - prev.elevation;
+      const prev = getElevation(sortedDayPoints[i - 1]);
+      const curr = getElevation(sortedDayPoints[i]);
+      const elevationChange = curr - prev;
       if (elevationChange > 0) {
         dayElevationGain += elevationChange;
       }
@@ -75,9 +83,10 @@ function calculateDailyElevationGain(points, startDateStr) {
 }
 
 /**
- * Calculate daily mileage for all days
+ * Calculate daily mileage using trail miles (max - min trailMile per day).
+ * Falls back to haversine for days with no trail mile data.
  */
-function calculateDailyMileage(points, startDateStr) {
+function calculateDailyMileage(points) {
   const dailyMileageMap = new Map();
 
   if (points.length < 2) {
@@ -92,21 +101,48 @@ function calculateDailyMileage(points, startDateStr) {
       continue;
     }
 
-    let dayMiles = 0;
-    const sortedDayPoints = dayPoints.sort((a, b) => a.time - b.time);
-
-    for (let i = 1; i < sortedDayPoints.length; i++) {
-      const prev = sortedDayPoints[i - 1];
-      const curr = sortedDayPoints[i];
-      const dist = haversine(prev.lat, prev.lon, curr.lat, curr.lon);
-      dayMiles += dist;
+    // Try trail-mile based calculation
+    const trailMilePoints = dayPoints.filter(p => p.trailMile != null);
+    if (trailMilePoints.length >= 2) {
+      const miles = trailMilePoints.map(p => p.trailMile);
+      const dayMiles = Math.max(...miles) - Math.min(...miles);
+      dailyMileageMap.set(dateKey, dayMiles);
+    } else {
+      // Fallback: haversine sum (no correction factor)
+      let dayMiles = 0;
+      const sortedDayPoints = dayPoints.sort((a, b) => a.time - b.time);
+      for (let i = 1; i < sortedDayPoints.length; i++) {
+        const prev = sortedDayPoints[i - 1];
+        const curr = sortedDayPoints[i];
+        dayMiles += haversine(prev.lat, prev.lon, curr.lat, curr.lon);
+      }
+      dailyMileageMap.set(dateKey, dayMiles);
     }
-
-    dayMiles = dayMiles * TRAIL_CORRECTION_FACTOR;
-    dailyMileageMap.set(dateKey, dayMiles);
   }
 
   return dailyMileageMap;
+}
+
+/**
+ * Calculate total miles using the highest trailMile among on-trail points.
+ * Falls back to haversine sum if no trail mile data available.
+ */
+function calculateTotalMiles(points) {
+  const trailMilePoints = points.filter(p => p.trailMile != null);
+  if (trailMilePoints.length > 0) {
+    return Math.max(...trailMilePoints.map(p => p.trailMile));
+  }
+
+  // Fallback: haversine sum (no correction factor)
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    if (!Number.isFinite(prev.lat) || !Number.isFinite(prev.lon) ||
+        !Number.isFinite(curr.lat) || !Number.isFinite(curr.lon)) continue;
+    total += haversine(prev.lat, prev.lon, curr.lat, curr.lon);
+  }
+  return total;
 }
 
 /**
@@ -136,28 +172,34 @@ export function calculateStats(points, startDateStr, totalTrailMiles, options = 
 
   const { currentDay, todayUTC, startDate } = calculateCurrentDay(startDateStr);
 
-  let totalMiles = 0;
-  let movingTimeHours = 0;
+  const totalMiles = calculateTotalMiles(points);
 
+  // Calculate moving time using haversine (for speed calculation)
+  let movingTimeHours = 0;
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
     const curr = points[i];
-    if (!Number.isFinite(prev.lat) || !Number.isFinite(prev.lon) ||
-        !Number.isFinite(curr.lat) || !Number.isFinite(curr.lon)) continue;
-    const dist = haversine(prev.lat, prev.lon, curr.lat, curr.lon);
-    totalMiles += dist;
-
     const timeDeltaHours = (curr.time - prev.time) / (1000 * 60 * 60);
     if (curr.velocity > MOVING_VELOCITY_THRESHOLD_MPH) {
       movingTimeHours += timeDeltaHours;
     }
   }
 
-  totalMiles = totalMiles * TRAIL_CORRECTION_FACTOR;
-
-  const dailyMileageMap = calculateDailyMileage(points, startDateStr);
+  const dailyMileageMap = calculateDailyMileage(points);
   const todayStr = getUTCDateString(todayUTC);
-  const dailyMiles = dailyMileageMap.get(todayStr) || 0;
+  const hasDataToday = dailyMileageMap.has(todayStr);
+
+  let dailyMiles;
+  let dailyDistanceDate;
+  if (hasDataToday) {
+    dailyMiles = dailyMileageMap.get(todayStr) || 0;
+    dailyDistanceDate = todayStr;
+  } else {
+    const sortedDates = [...dailyMileageMap.keys()].sort().reverse();
+    const mostRecentDate = sortedDates[0];
+    dailyMiles = mostRecentDate ? (dailyMileageMap.get(mostRecentDate) || 0) : 0;
+    dailyDistanceDate = mostRecentDate || todayStr;
+  }
 
   const avgSpeed = movingTimeHours > 0 ? totalMiles / movingTimeHours : 0;
   const completedDays = currentDay > MIN_DAY_ON_TRAIL ? currentDay - 1 : MIN_DAY_ON_TRAIL;
@@ -177,7 +219,7 @@ export function calculateStats(points, startDateStr, totalTrailMiles, options = 
     }
   }
 
-  const dailyElevationGain = calculateDailyElevationGain(points, startDateStr);
+  const dailyElevationGain = calculateDailyElevationGain(points);
   let mostElevationGainFeet = 0;
   let mostElevationGainDate = null;
 
@@ -193,6 +235,8 @@ export function calculateStats(points, startDateStr, totalTrailMiles, options = 
     totalMilesCompleted: totalMiles.toFixed(1),
     milesRemaining: milesRemaining.toFixed(1),
     dailyDistance: dailyMiles.toFixed(1),
+    hasDataToday,
+    dailyDistanceDate,
     averageSpeed: avgSpeed.toFixed(1),
     currentDayOnTrail: currentDay,
     estimatedFinishDate: estFinish.toLocaleDateString('en-US'),

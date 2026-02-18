@@ -8,6 +8,7 @@ import { fetchWeather } from './weather.js';
 import { TOTAL_TRAIL_MILES, DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
 import { tagPointsOnOffTrail } from './trail-proximity.js';
 import { AT_TRAIL_COORDS } from './at-trail-simplified.js';
+import { snapPointsToTrail } from './trail-distance.js';
 
 // Stats handler — reads points from KV only (cron handles KML polling)
 export async function handleStats(request, env) {
@@ -42,6 +43,7 @@ export async function handleStats(request, env) {
       ? parseFloat(env.OFF_TRAIL_THRESHOLD)
       : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
     tagPointsOnOffTrail(allPoints, AT_TRAIL_COORDS, thresholdMiles);
+    snapPointsToTrail(allPoints);
 
     const stats = calculateStats(allPoints, START_DATE_STR, TOTAL_TRAIL_MILES, { filterOffTrail: true });
 

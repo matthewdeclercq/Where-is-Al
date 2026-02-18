@@ -4,6 +4,7 @@ import { loadHistoricalPoints } from './storage.js';
 import { tagPointsOnOffTrail } from './trail-proximity.js';
 import { AT_TRAIL_COORDS } from './at-trail-simplified.js';
 import { DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
+import { snapPointsToTrail } from './trail-distance.js';
 
 // Points handler — reads points from KV only (cron handles KML polling)
 export async function handlePoints(request, env) {
@@ -34,8 +35,9 @@ export async function handlePoints(request, env) {
   try {
     const allPoints = await loadHistoricalPoints(START_DATE_STR, env);
 
-    // Tag on/off trail
+    // Tag on/off trail, then snap to get trail miles and elevation
     tagPointsOnOffTrail(allPoints, AT_TRAIL_COORDS, thresholdMiles);
+    snapPointsToTrail(allPoints);
 
     // Serialize points for response
     const responsePoints = allPoints.map(p => ({
@@ -44,6 +46,8 @@ export async function handlePoints(request, env) {
       time: p.time instanceof Date ? p.time.toISOString() : p.time,
       elevation: p.elevation !== undefined ? p.elevation : null,
       onTrail: p.onTrail,
+      trailMile: p.trailMile !== undefined ? p.trailMile : null,
+      trailElevation: p.trailElevation !== undefined ? p.trailElevation : null,
       lastPingTime: p.lastPingTime ? (p.lastPingTime instanceof Date ? p.lastPingTime.toISOString() : p.lastPingTime) : undefined,
       stationaryPings: p.stationaryPings > 1 ? p.stationaryPings : undefined
     }));

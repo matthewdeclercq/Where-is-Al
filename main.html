@@ -49,17 +49,17 @@
         <section class="map-section" aria-label="Live trail map">
             <h2 class="section-title">Live Trail Map</h2>
             <div class="map-legend">
+                <span class="legend-item" id="tracker-status">
+                    <span class="tracker-status-dot" id="tracker-status-dot"></span>
+                    <span id="tracker-status-label">Tracker: --</span>
+                </span>
+                <span class="legend-divider"></span>
                 <span class="legend-item"><span class="legend-line legend-trail"></span> AT Trail</span>
                 <span class="legend-item"><span class="legend-dot legend-on-trail"></span> On Trail</span>
                 <span class="legend-item"><span class="legend-dot legend-off-trail"></span> Off Trail</span>
                 <span class="legend-item"><span class="legend-dot legend-current"></span> Current</span>
                 <span class="legend-item"><span class="legend-line legend-route"></span> Route</span>
                 <span class="legend-item"><i class="fas fa-mountain legend-milestone-icon"></i> Milestone</span>
-                <span class="legend-divider"></span>
-                <span class="legend-item" id="tracker-status">
-                    <span class="tracker-status-dot" id="tracker-status-dot"></span>
-                    <span id="tracker-status-label">Tracker: --</span>
-                </span>
             </div>
             <div class="map-container">
                 <div id="leaflet-map"></div>
@@ -94,6 +94,10 @@
                                 <i class="fas fa-wind"></i>
                                 <span class="weather-wind">—</span>
                             </div>
+                            <div id="weather-location-name" class="weather-detail-item" style="display:none;">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span id="weather-location-text"></span>
+                            </div>
                         </div>
                     </div>
                     <div id="weather-forecast" class="weather-forecast">
@@ -113,11 +117,23 @@
             <!-- Daily Performance -->
             <div class="stat-group">
                 <h3 class="stat-group-heading">Daily Performance</h3>
+                <div class="day-selector" id="elevation-day-selector">
+                    <button class="day-nav-button" id="elevation-day-prev" aria-label="Previous day" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="day-display" id="elevation-day-display">—</span>
+                    <button class="day-nav-button" id="elevation-day-next" aria-label="Next day" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <p class="stat-placeholder elevation-placeholder">Loading elevation data...</p>
+                <div id="daily-performance-content">
                 <div class="stats-grid">
                     <div class="stat-card">
                         <i class="fas fa-walking stat-icon"></i>
-                        <h3 class="stat-label">Daily Distance (Last 24 Hours) (mi)</h3>
+                        <h3 class="stat-label">Daily Distance (mi)</h3>
                         <p class="stat-value" id="daily-distance">—</p>
+                        <p class="stat-note" id="daily-distance-note" style="display:none;"></p>
                         <p class="stat-placeholder">Stats coming soon once Al hits the trail!</p>
                     </div>
                     <div class="stat-card">
@@ -131,15 +147,6 @@
                     <div class="elevation-header">
                         <i class="fas fa-mountain stat-icon"></i>
                         <h3 class="stat-label">Elevation Profile</h3>
-                        <div class="day-selector" id="elevation-day-selector">
-                            <button class="day-nav-button" id="elevation-day-prev" aria-label="Previous day" disabled>
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <span class="day-display" id="elevation-day-display">—</span>
-                            <button class="day-nav-button" id="elevation-day-next" aria-label="Next day" disabled>
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                        </div>
                     </div>
                     <div class="elevation-stats">
                         <div class="elevation-stat">
@@ -170,7 +177,7 @@
                     <div class="elevation-chart-container">
                         <canvas id="elevation-chart"></canvas>
                     </div>
-                    <p class="stat-placeholder elevation-placeholder">Loading elevation data...</p>
+                </div>
                 </div>
             </div>
 

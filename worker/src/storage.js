@@ -105,7 +105,10 @@ export async function storePointsByDay(points, env) {
             lon: p.lon,
             time: p.time.toISOString(),
             velocity: p.velocity,
-            elevation: p.elevation !== undefined ? p.elevation : null
+            elevation: p.elevation !== undefined ? p.elevation : null,
+            onTrail: p.onTrail !== undefined ? p.onTrail : null,
+            trailMile: p.trailMile !== undefined ? p.trailMile : null,
+            trailElevation: p.trailElevation !== undefined ? p.trailElevation : null
           }));
 
         await env.TRAIL_HISTORY.put(kvKey, JSON.stringify(mergedPoints));

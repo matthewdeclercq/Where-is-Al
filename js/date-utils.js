@@ -19,11 +19,11 @@
         const today = new Date();
         
         if (useUTC) {
-            const todayStr = today.toISOString().split('T')[0];
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             if (dateString === todayStr) {
                 return 'Today';
             }
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
         } else {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);

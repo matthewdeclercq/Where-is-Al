@@ -57,6 +57,21 @@
     }
 
     /**
+     * Update the nearest city/town display
+     */
+    function updateLocationName(locationName) {
+        const el = document.getElementById('weather-location-name');
+        const textEl = document.getElementById('weather-location-text');
+        if (!el || !textEl) return;
+        if (locationName) {
+            textEl.textContent = locationName;
+            el.style.display = 'flex';
+        } else {
+            el.style.display = 'none';
+        }
+    }
+
+    /**
      * Update current weather display
      */
     function updateCurrentWeather(weather) {
@@ -367,6 +382,7 @@
         hideWeatherPlaceholder();
         
         try {
+            updateLocationName(data.weather.locationName);
             updateCurrentWeather(data.weather);
             updateForecast(data.weather);
         } catch (e) {

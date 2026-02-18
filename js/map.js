@@ -10,14 +10,14 @@
             '<a href="http://viewfinderpanoramas.org">SRTM</a> | ' +
             'Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> ' +
             '(<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
-        trailColor: '#1d4ed8',
+        trailColor: '#1e40af',
         trailWeight: 4,
         trailOpacity: 0.85,
-        onTrailColor: '#e6198a',
-        offTrailColor: '#ff4400',
+        onTrailColor: '#06b6d4',
+        offTrailColor: '#f97316',
         currentPositionColor: '#facc15',
         currentPositionBorder: '#1a1a1a',
-        routeLineColor: '#e6198a',
+        routeLineColor: '#06b6d4',
         defaultCenter: [37.0, -79.5],
         defaultZoom: 6
     };
@@ -38,10 +38,11 @@
     let currentMarker = null;
     let trailDataLoaded = false;
     let milestonesDataLoaded = false;
+    let hasInitiallyFocused = false;
 
     function addFullscreenControl() {
         var FullscreenControl = L.Control.extend({
-            options: { position: 'topleft' },
+            options: { position: 'topright' },
             onAdd: function() {
                 var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control map-fullscreen-control');
                 var button = L.DomUtil.create('a', 'map-fullscreen-button', container);
@@ -61,6 +62,37 @@
             }
         });
         map.addControl(new FullscreenControl());
+    }
+
+    function addLocateControl() {
+        var LocateControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function() {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                var button = L.DomUtil.create('a', 'map-fullscreen-button', container);
+                button.href = '#';
+                button.title = 'Go to current location';
+                button.setAttribute('role', 'button');
+                button.setAttribute('aria-label', 'Go to current location');
+                button.innerHTML = '<i class="fas fa-crosshairs"></i>';
+
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.on(button, 'click', function(e) {
+                    L.DomEvent.preventDefault(e);
+                    flyToCurrentLocation();
+                });
+
+                return container;
+            }
+        });
+        map.addControl(new LocateControl());
+    }
+
+    function flyToCurrentLocation() {
+        if (currentMarker) {
+            map.flyTo(currentMarker.getLatLng(), 13);
+            currentMarker.openPopup();
+        }
     }
 
     function toggleFullscreen(button) {
@@ -109,9 +141,10 @@
         map = L.map('leaflet-map', {
             center: MapConfig.defaultCenter,
             zoom: MapConfig.defaultZoom,
-            zoomControl: true,
+            zoomControl: false,
             scrollWheelZoom: true
         });
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
         // Add tile layer
         L.tileLayer(MapConfig.tileUrl, {
@@ -122,6 +155,9 @@
 
         // Add fullscreen control
         addFullscreenControl();
+
+        // Add "go to current location" control
+        addLocateControl();
 
         // Load trail and milestones in parallel, then fetch points
         loadTrailData();
@@ -186,9 +222,9 @@
                 milestones.forEach(function(ms) {
                     var icon = L.divIcon({
                         className: 'milestone-icon',
-                        html: '<i class="fas fa-mountain" style="color: #a78bfa;"></i>',
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
+                        html: '<i class="fas fa-mountain" style="color: #f59e0b;"></i>',
+                        iconSize: [26, 26],
+                        iconAnchor: [13, 13]
                     });
 
                     var popupContent = '<strong>' + ms.name + '</strong>' +
@@ -339,11 +375,10 @@
             }).addTo(map);
         }
 
-        // Auto-fit bounds to all points
-        var allCoords = points.map(function(p) { return [p.lat, p.lon]; });
-        if (allCoords.length > 0) {
-            var bounds = L.latLngBounds(allCoords);
-            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+        // On first load, center on current position
+        if (!hasInitiallyFocused && currentMarker) {
+            map.setView(currentMarker.getLatLng(), 13);
+            hasInitiallyFocused = true;
         }
 
         // Update tracker status indicator

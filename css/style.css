@@ -521,6 +521,7 @@ main > p:first-of-type {
     background: linear-gradient(to left, transparent, var(--trail-orange));
 }
 
+
 /* Map Section */
 .map-section,
 .weather-section,
@@ -570,17 +571,17 @@ main > p:first-of-type {
 }
 
 .legend-trail {
-    background: #1d4ed8;
+    background: #1e40af;
 }
 
 .legend-on-trail {
-    background: #e6198a;
+    background: #06b6d4;
     border: 2px solid #ffffff;
     box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
 }
 
 .legend-off-trail {
-    background: #ff4400;
+    background: #f97316;
     border: 2px solid #1a1a1a;
     box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
@@ -593,12 +594,12 @@ main > p:first-of-type {
 }
 
 .legend-route {
-    background: #e6198a;
+    background: #06b6d4;
     height: 3px;
     background-image: repeating-linear-gradient(
         90deg,
-        #e6198a 0px,
-        #e6198a 6px,
+        #06b6d4 0px,
+        #06b6d4 6px,
         transparent 6px,
         transparent 10px
     );
@@ -606,8 +607,8 @@ main > p:first-of-type {
 }
 
 .legend-milestone-icon {
-    color: #a78bfa;
-    font-size: 0.9rem;
+    color: #f59e0b;
+    font-size: 1rem;
 }
 
 .legend-divider {
@@ -711,7 +712,15 @@ main > p:first-of-type {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 20px;
+}
+
+/* Leaflet zoom control sizing */
+.leaflet-control-zoom a {
+    width: 42px !important;
+    height: 42px !important;
+    line-height: 42px !important;
+    font-size: 20px !important;
 }
 
 /* Fullscreen map button */
@@ -719,9 +728,9 @@ main > p:first-of-type {
     display: flex !important;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    font-size: 16px;
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 20px !important;
     color: #333;
     text-decoration: none;
     background: #fff;
@@ -971,10 +980,17 @@ main > p:first-of-type {
     margin-top: 0.5rem;
 }
 
+.stat-note {
+    font-size: 0.8rem;
+    color: var(--trail-orange);
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
 /* Elevation Profile Card */
 .elevation-profile-card {
     grid-column: 1 / -1;
-    padding: 2.5rem 2.5rem 0 2.5rem;
+    padding: 2.5rem;
     margin-top: 1.5rem;
     background: var(--gradient-card) !important;
 }
@@ -984,7 +1000,7 @@ main > p:first-of-type {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .elevation-header .stat-icon {
@@ -1000,7 +1016,8 @@ main > p:first-of-type {
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    margin-top: 0.5rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
 }
 
 .day-nav-button {
@@ -1108,8 +1125,6 @@ main > p:first-of-type {
 
 .elevation-chart-container {
     position: relative;
-    height: 400px;
-    min-height: 400px;
     width: 100%;
     margin-top: 1rem;
     display: none;
@@ -1124,7 +1139,7 @@ main > p:first-of-type {
 
 .elevation-placeholder {
     text-align: center;
-    padding: 2rem;
+    padding: 0.5rem 2rem;
     color: var(--text-light);
 }
 
@@ -1164,10 +1179,6 @@ main > p:first-of-type {
         font-size: 2rem;
     }
 
-    .elevation-chart-container {
-        height: 300px;
-        min-height: 300px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -1202,10 +1213,6 @@ main > p:first-of-type {
         font-size: 0.8rem;
     }
 
-    .elevation-chart-container {
-        height: 250px;
-        min-height: 250px;
-    }
 }
 
 /* Weather Section */

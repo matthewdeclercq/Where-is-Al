@@ -221,10 +221,12 @@
 
         // Show loading state
         const placeholder = document.querySelector('.elevation-placeholder');
+        const dailyContent = document.getElementById('daily-performance-content');
         if (placeholder) {
             placeholder.textContent = 'Loading elevation data...';
             placeholder.style.display = 'block';
         }
+        if (dailyContent) dailyContent.style.display = 'none';
 
         // Hide chart container
         const chartContainer = document.querySelector('.elevation-chart-container');
@@ -234,27 +236,43 @@
 
         // Fetch and display elevation data
         const elevationData = await fetchElevationData(day);
-        
+
+        const clearChart = () => {
+            if (state.chart) {
+                state.chart.destroy();
+                state.chart = null;
+            }
+            if (chartContainer) chartContainer.style.display = 'none';
+            if (dailyContent) dailyContent.style.display = 'none';
+            updateMinMax(null, null);
+            updateVerticalClimbed(null);
+            updateVerticalLoss(null);
+        };
+
         if (!elevationData || !elevationData.points || elevationData.points.length === 0) {
             if (placeholder) {
                 placeholder.textContent = 'No elevation data available for this day.';
                 placeholder.style.display = 'block';
             }
-            updateMinMax(null, null);
-            updateVerticalClimbed(null);
-            updateVerticalLoss(null);
+            clearChart();
             return;
         }
 
-        // Hide placeholder
-        if (placeholder) {
-            placeholder.style.display = 'none';
+        // Check daytime filter before showing the chart container
+        const filteredPoints = filterDaytimePoints(elevationData.points);
+        if (filteredPoints.length === 0) {
+            if (placeholder) {
+                placeholder.textContent = 'No hiking data recorded for this day.';
+                placeholder.style.display = 'block';
+            }
+            clearChart();
+            return;
         }
 
-        // Show chart container
-        if (chartContainer) {
-            chartContainer.style.display = 'block';
-        }
+        // Hide placeholder, show daily content and chart
+        if (placeholder) placeholder.style.display = 'none';
+        if (dailyContent) dailyContent.style.display = 'block';
+        if (chartContainer) chartContainer.style.display = 'block';
 
         // Update stats
         updateMinMax(elevationData.minElevation, elevationData.maxElevation);
@@ -358,18 +376,6 @@
         const canvas = document.getElementById('elevation-chart');
         if (!canvas) return;
 
-        const chartContainer = document.querySelector('.elevation-chart-container');
-        if (!chartContainer) return;
-
-        // Set explicit canvas dimensions
-        const containerWidth = chartContainer.offsetWidth;
-        const containerHeight = chartContainer.offsetHeight || 400;
-
-        canvas.width = containerWidth * window.devicePixelRatio;
-        canvas.height = containerHeight * window.devicePixelRatio;
-        canvas.style.width = containerWidth + 'px';
-        canvas.style.height = containerHeight + 'px';
-
         const ctx = canvas.getContext('2d');
         if (!ctx) {
             console.error('[Elevation] Could not get 2d context from canvas');
@@ -378,11 +384,7 @@
 
         // Filter points to only show data from 6am to 8pm
         const filteredPoints = filterDaytimePoints(elevationData.points);
-        
-        if (filteredPoints.length === 0) {
-            console.warn('[Elevation] No data points found between 6am and 8pm');
-            return;
-        }
+        if (filteredPoints.length === 0) return; // Already handled by selectDay
 
         // Prepare data from filtered points
         const labels = filteredPoints.map(p => formatTime(p.time));
@@ -435,17 +437,15 @@
 
         // Fetch available days
         const days = await fetchAvailableDays();
-        state.availableDays = days;
 
-        if (days.length === 0) {
-            const placeholder = document.querySelector('.elevation-placeholder');
-            if (placeholder) {
-                placeholder.textContent = 'No elevation data available yet.';
-                placeholder.style.display = 'block';
-            }
-            updateNavigationButtons();
-            return;
+        // Add today (local date) as first option if not already present
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        if (!days.includes(todayStr)) {
+            days.unshift(todayStr);
         }
+        // Deduplicate
+        state.availableDays = [...new Set(days)];
 
         // Update day selector display
         renderDaySelector(days);

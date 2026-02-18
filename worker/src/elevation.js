@@ -75,7 +75,7 @@ export async function handleElevationDays(request, env) {
         const dayPointsJson = await env.TRAIL_HISTORY.get(key.name);
         if (dayPointsJson) {
           const dayPoints = JSON.parse(dayPointsJson);
-          const hasElevation = dayPoints.some(p => p.elevation !== null && p.elevation !== undefined);
+          const hasElevation = dayPoints.some(p => p.trailElevation != null || (p.elevation != null));
           return hasElevation ? dateStr : null;
         }
       } catch (error) {
@@ -114,10 +114,10 @@ export async function getElevationByDay(dateStr, env) {
     const dayPoints = JSON.parse(dayPointsJson);
 
     const elevationPoints = dayPoints
-      .filter(p => p.elevation !== null && p.elevation !== undefined)
+      .filter(p => (p.trailElevation != null) || (p.elevation != null))
       .map(p => ({
         time: p.time,
-        elevation: Math.round(p.elevation * 10) / 10
+        elevation: Math.round((p.trailElevation != null ? p.trailElevation : p.elevation) * 10) / 10
       }))
       .sort((a, b) => new Date(a.time) - new Date(b.time));
 

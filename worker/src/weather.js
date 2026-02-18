@@ -31,12 +31,29 @@ const weatherCodeMap = {
 
 export async function fetchWeather(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5&temperature_unit=fahrenheit`;
+  const geocodeUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Weather API error: ${response.status}`);
+  const geocodeController = new AbortController();
+  const geocodeTimeout = setTimeout(() => geocodeController.abort(), 3000);
+
+  const [weatherResponse, geocodeResponse] = await Promise.allSettled([
+    fetch(url),
+    fetch(geocodeUrl, { signal: geocodeController.signal }).finally(() => clearTimeout(geocodeTimeout))
+  ]);
+
+  if (weatherResponse.status === 'rejected' || !weatherResponse.value.ok) {
+    throw new Error(`Weather API error: ${weatherResponse.value?.status ?? 'network error'}`);
   }
 
+  let locationName = null;
+  if (geocodeResponse.status === 'fulfilled' && geocodeResponse.value.ok) {
+    try {
+      const geo = await geocodeResponse.value.json();
+      locationName = geo.locality || geo.city || geo.principalSubdivision || null;
+    } catch (_) {}
+  }
+
+  const response = weatherResponse.value;
   const data = await response.json();
 
   const current = data.current;
@@ -61,6 +78,7 @@ export async function fetchWeather(lat, lon) {
       windDirection: current.wind_direction_10m,
       feelsLike: Math.round(current.apparent_temperature)
     },
-    forecast: forecast
+    forecast: forecast,
+    locationName: locationName
   };
 }
