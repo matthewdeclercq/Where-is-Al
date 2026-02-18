@@ -36,12 +36,6 @@
     let routeLineLayer = null;
     let currentMarker = null;
     let hasInitiallyFocused = false;
-    let preFullscreenRect = null;
-    let isFullscreenAnimating = false;
-
-    function clipInset(t, r, b, l, radius) {
-        return 'inset(' + t + 'px ' + r + 'px ' + b + 'px ' + l + 'px round ' + radius + ')';
-    }
 
     function createMapControl(options) {
         var Control = L.Control.extend({
@@ -93,99 +87,31 @@
 
     function toggleFullscreen(button) {
         var wrapper = mapSection;
-        if (!wrapper || isFullscreenAnimating) return;
+        if (!wrapper) return;
 
-        var isFullscreen = wrapper.classList.contains('map-fullscreen');
-        var DURATION = '0.38s';
-        var EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
-        var RADIUS = '14px';
-
-        function invalidateMap() {
-            if (map) {
-                map.invalidateSize({ animate: false, pan: false });
-                setTimeout(function() {
-                    if (map) {
-                        map.invalidateSize({ animate: false, pan: false });
-                        map.fire('moveend');
-                    }
-                }, 50);
-            }
-        }
-
-        isFullscreenAnimating = true;
-
-        if (!isFullscreen) {
-            // ENTER FULLSCREEN
-            // Scroll to top first so Leaflet's cached offset is correct,
-            // then measure where the map sits in the viewport post-scroll.
+        if (wrapper.classList.contains('map-fullscreen')) {
+            wrapper.classList.remove('map-fullscreen');
+            document.body.style.overflow = '';
+            button.innerHTML = '<i class="fas fa-expand"></i>';
+            button.title = 'Enter fullscreen';
+        } else {
+            // Scroll to top first so Leaflet's cached container offset
+            // doesn't cause a stale viewport calculation
             window.scrollTo(0, 0);
-            preFullscreenRect = wrapper.getBoundingClientRect();
-            var r = preFullscreenRect;
-            var startClip = clipInset(
-                r.top,
-                window.innerWidth  - r.right,
-                window.innerHeight - r.bottom,
-                r.left,
-                RADIUS
-            );
-
             wrapper.classList.add('map-fullscreen');
             document.body.style.overflow = 'hidden';
             button.innerHTML = '<i class="fas fa-compress"></i>';
             button.title = 'Exit fullscreen';
+        }
 
-            // Start clipped to the pre-fullscreen rect, then expand.
-            wrapper.style.clipPath = startClip;
-            wrapper.style.willChange = 'clip-path';
-            wrapper.offsetHeight; // force reflow before adding transition
-
-            wrapper.style.transition = 'clip-path ' + DURATION + ' ' + EASE;
-            wrapper.style.clipPath = clipInset(0, 0, 0, 0, '0px');
-
-            wrapper.addEventListener('transitionend', function onEnterDone(e) {
-                if (e.propertyName !== 'clip-path') return;
-                wrapper.removeEventListener('transitionend', onEnterDone);
-                wrapper.style.clipPath = '';
-                wrapper.style.transition = '';
-                wrapper.style.willChange = '';
-                isFullscreenAnimating = false;
-                invalidateMap();
-            });
-
-        } else {
-            // EXIT FULLSCREEN
-            // Animate clip-path back to the stored pre-fullscreen rect while
-            // the element is still position:fixed, then remove the class.
-            var r2 = preFullscreenRect || { top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0 };
-            var endClip = clipInset(
-                r2.top,
-                window.innerWidth  - r2.right,
-                window.innerHeight - r2.bottom,
-                r2.left,
-                RADIUS
-            );
-
-            wrapper.style.clipPath = clipInset(0, 0, 0, 0, '0px');
-            wrapper.style.willChange = 'clip-path';
-            wrapper.style.transition = 'none';
-            wrapper.offsetHeight; // force reflow
-
-            wrapper.style.transition = 'clip-path ' + DURATION + ' ' + EASE;
-            wrapper.style.clipPath = endClip;
-
-            wrapper.addEventListener('transitionend', function onExitDone(e) {
-                if (e.propertyName !== 'clip-path') return;
-                wrapper.removeEventListener('transitionend', onExitDone);
-                wrapper.classList.remove('map-fullscreen');
-                document.body.style.overflow = '';
-                wrapper.style.clipPath = '';
-                wrapper.style.transition = '';
-                wrapper.style.willChange = '';
-                isFullscreenAnimating = false;
-                button.innerHTML = '<i class="fas fa-expand"></i>';
-                button.title = 'Enter fullscreen';
-                invalidateMap();
-            });
+        if (map) {
+            map.invalidateSize({ animate: false, pan: false });
+            setTimeout(function() {
+                if (map) {
+                    map.invalidateSize({ animate: false, pan: false });
+                    map.fire('moveend');
+                }
+            }, 50);
         }
     }
 

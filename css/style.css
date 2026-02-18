@@ -1475,6 +1475,14 @@ main > p:first-of-type {
     margin-top: 2rem;
 }
 
+.log-empty-message {
+    text-align: center;
+    color: var(--text-light);
+    font-style: italic;
+    padding: 2rem;
+    margin: 0;
+}
+
 /* About Section */
 .about-content {
     max-width: 800px;

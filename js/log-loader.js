@@ -34,7 +34,10 @@
                 throw new Error(`Invalid manifest format: ${parseError.message}`);
             }
             
-            if (!Array.isArray(filenames) || filenames.length === 0) return;
+            if (!Array.isArray(filenames) || filenames.length === 0) {
+                logGrid.innerHTML = '<p class="log-empty-message">No log entries to display</p>';
+                return;
+            }
 
             // Sort by filename (newest first) and load in parallel for better performance
             // Load all entries in parallel, then insert in order
@@ -52,6 +55,11 @@
             const results = await Promise.all(loadPromises);
             // Filter out failed loads and insert in order (Promise.all preserves order)
             const validResults = results.filter(result => result.html !== null);
+            
+            if (validResults.length === 0) {
+                logGrid.innerHTML = '<p class="log-empty-message">No log entries to display</p>';
+                return;
+            }
             
             // Insert in sorted order (already sorted by filename from sortedFilenames)
             for (const { html } of validResults) {

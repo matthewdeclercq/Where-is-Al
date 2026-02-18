@@ -154,14 +154,19 @@ Weather and elevation modules use Chart.js for visualizations:
 
 ### Leaflet Map Integration
 
-`js/map.js` renders an interactive Leaflet map using OpenTopoMap tiles:
+`js/map.js` renders an interactive Leaflet map using USGS National Map topo tiles (`https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}`, maxZoom 16):
 - Fetches GPS points from the `/points` endpoint and plots them on the AT trail
 - Points are color-coded: on-trail (cyan `#06b6d4`), off-trail (orange `#f97316`)
 - Current position shown as a yellow marker (`#facc15`)
-- Full AT route drawn as a blue polyline from `at-trail-simplified.js` data
+- Full AT route drawn as a blue polyline from `data/at-trail-simplified.geojson` (89KB, 4,822 pts — generated from `worker/src/at-trail-simplified.js`)
 - Milestone markers loaded from the `/points` response
 - Custom controls: fullscreen toggle and "fly to current location"
 - Map refreshes every 30 minutes (configurable via `refreshIntervals.map`)
+
+**Note on trail data files:**
+- `data/at-trail-simplified.geojson` — frontend map display only (4,822 pts, generated via `node -e` from worker data)
+- `data/at-trail.geojson` — full-resolution source (275,250 pts, 6MB) — not loaded by the browser
+- `worker/src/at-trail-simplified.js` — worker-side on/off-trail detection (same 4,822 pts, `[lon, lat]` format)
 
 ### Trail Distance & Elevation System
 
@@ -202,23 +207,9 @@ GPS pings are snapped to the known AT trail to get accurate distance and elevati
 
 ### Adding a Log Entry
 
-1. Create `log-entries/YYYY-MM-DD.html` with this structure:
-```html
-<div class="log-entry">
-    <div class="log-entry-header">
-        <h3 class="log-entry-title">Title</h3>
-        <div class="log-entry-meta">
-            <span class="log-entry-date">May 1, 2024</span>
-            <span class="log-entry-location">Location</span>
-        </div>
-    </div>
-    <div class="log-entry-content">
-        <p>Content here...</p>
-    </div>
-</div>
-```
-
-2. Add filename to `log-entries/manifest.json` (newest first)
+1. Copy `log-entries/TEMPLATE.html` and rename to `log-entries/YYYY-MM-DD.html`
+2. Fill in the title, date, location, and content
+3. Add the filename to `log-entries/manifest.json` (newest first)
 
 ### Changing the Password
 
