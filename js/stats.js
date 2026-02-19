@@ -21,7 +21,6 @@
         'totalMilesCompleted': 'total-miles',
         'milesRemaining': 'miles-remaining',
         'dailyDistance': 'daily-distance',
-        'averageSpeed': 'avg-speed',
         'currentDayOnTrail': 'current-day',
         'estimatedFinishDate': 'est-finish',
         'startDate': 'start-date',
@@ -94,6 +93,23 @@
                 updateStatElement(key, statsData[key]);
             }
         });
+
+        // Derive average pace (min:sec /mi) from averageSpeed (mph)
+        const paceEl = document.getElementById('avg-pace');
+        if (paceEl) {
+            const speed = parseFloat(statsData.averageSpeed);
+            if (speed > 0) {
+                const totalSeconds = Math.round((60 / speed) * 60);
+                const mins = Math.floor(totalSeconds / 60);
+                const secs = totalSeconds % 60;
+                paceEl.textContent = `${mins}:${String(secs).padStart(2, '0')} /mi`;
+                const statCard = paceEl.closest('.stat-card');
+                if (statCard) {
+                    const placeholder = statCard.querySelector('.stat-placeholder');
+                    if (placeholder) placeholder.style.display = 'none';
+                }
+            }
+        }
 
         // Show a note when there are no pings yet today
         const noteEl = document.getElementById('daily-distance-note');

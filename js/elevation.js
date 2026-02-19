@@ -256,6 +256,7 @@
             updateMinMax(null, null);
             updateVerticalClimbed(null);
             updateVerticalLoss(null);
+            updateDailySpeed(null);
         };
 
         const filteredPoints = (!elevationData || !elevationData.points)
@@ -280,6 +281,7 @@
         updateMinMax(elevationData.minElevation, elevationData.maxElevation);
         updateVerticalClimbed(elevationData.verticalClimbed);
         updateVerticalLoss(elevationData.verticalLoss);
+        updateDailySpeed(elevationData.averageSpeed ?? null);
 
         // Update chart
         updateChart(elevationData);
@@ -319,6 +321,16 @@
 
         if (lossEl) {
             lossEl.textContent = loss !== null ? loss.toLocaleString() : '—';
+        }
+    }
+
+    /**
+     * Update average speed display for the selected day
+     */
+    function updateDailySpeed(speed) {
+        const el = document.getElementById('avg-speed');
+        if (el) {
+            el.textContent = speed !== null ? speed.toFixed(1) : '—';
         }
     }
 

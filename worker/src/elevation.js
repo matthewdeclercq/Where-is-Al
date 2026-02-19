@@ -2,7 +2,8 @@ import { createErrorResponse, createSuccessResponse } from './responses.js';
 import { getMockElevationData, getMockElevationDays } from './mock.js';
 import { calculateElevationStats } from './stats.js';
 import { getElevation } from './utils.js';
-import { DATE_REGEX } from './constants.js';
+import { DATE_REGEX, MOVING_VELOCITY_THRESHOLD_MPH } from './constants.js';
+import { haversine } from './geo.js';
 
 const hasElevationData = p => getElevation(p) !== null;
 
@@ -124,7 +125,7 @@ export async function getElevationByDay(dateStr, env) {
       .sort((a, b) => new Date(a.time) - new Date(b.time));
 
     if (elevationPoints.length === 0) {
-      return { points: [], minElevation: null, maxElevation: null, verticalClimbed: null, verticalLoss: null, date: dateStr };
+      return { points: [], minElevation: null, maxElevation: null, verticalClimbed: null, verticalLoss: null, averageSpeed: null, date: dateStr };
     }
 
     const elevations = elevationPoints.map(p => p.elevation);
@@ -133,13 +134,42 @@ export async function getElevationByDay(dateStr, env) {
 
     const { verticalClimbed, verticalLoss } = calculateElevationStats(elevationPoints);
 
+    // Calculate average speed for this day from on-trail points
+    const onTrailPoints = dayPoints
+      .filter(p => p.onTrail !== false && p.lat != null && p.lon != null)
+      .sort((a, b) => new Date(a.time) - new Date(b.time));
+
+    let averageSpeed = null;
+    if (onTrailPoints.length >= 2) {
+      const trailMilePoints = onTrailPoints.filter(p => p.trailMile != null);
+      let dailyMiles = 0;
+      if (trailMilePoints.length >= 2) {
+        const miles = trailMilePoints.map(p => p.trailMile);
+        dailyMiles = Math.max(...miles) - Math.min(...miles);
+      } else {
+        for (let i = 1; i < onTrailPoints.length; i++) {
+          dailyMiles += haversine(onTrailPoints[i - 1].lat, onTrailPoints[i - 1].lon, onTrailPoints[i].lat, onTrailPoints[i].lon);
+        }
+      }
+      let movingTimeHours = 0;
+      for (let i = 1; i < onTrailPoints.length; i++) {
+        if ((onTrailPoints[i].velocity || 0) > MOVING_VELOCITY_THRESHOLD_MPH) {
+          movingTimeHours += (new Date(onTrailPoints[i].time) - new Date(onTrailPoints[i - 1].time)) / 3600000;
+        }
+      }
+      if (movingTimeHours > 0) {
+        averageSpeed = parseFloat((dailyMiles / movingTimeHours).toFixed(1));
+      }
+    }
+
     return {
       date: dateStr,
       points: elevationPoints,
       minElevation,
       maxElevation,
       verticalClimbed,
-      verticalLoss
+      verticalLoss,
+      averageSpeed
     };
   } catch (error) {
     console.error(`[Elevation] Failed to get elevation data for ${dateStr}:`, error);

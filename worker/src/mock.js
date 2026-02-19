@@ -164,12 +164,17 @@ export function getMockElevationData(dateStr, startDateStr) {
 
   const { verticalClimbed, verticalLoss } = calculateElevationStats(points);
 
+  // Town/zero days have no speed; hiking days get a realistic value
+  const townDayOffsets = [3, 6, 8, 11];
+  const isTownDay = townDayOffsets.includes(dayOffset);
+
   return {
     date: dateStr,
     points: points,
     minElevation: minElevation,
     maxElevation: maxElevation,
     verticalClimbed: verticalClimbed,
-    verticalLoss: verticalLoss
+    verticalLoss: verticalLoss,
+    averageSpeed: isTownDay ? null : 2.4
   };
 }
