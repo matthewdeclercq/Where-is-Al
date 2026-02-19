@@ -11,30 +11,30 @@ function generateMockWeather(todayUTC) {
 
   return {
     current: {
-      temperature: 68,
+      temperature: 54,
       condition: 'Partly cloudy',
-      humidity: 65,
-      windSpeed: 7,
-      windDirection: 180,
-      feelsLike: 70
+      humidity: 72,
+      windSpeed: 9,
+      windDirection: 202,
+      feelsLike: 51
     },
     forecast: [
-      { date: getDateString(0), high: 72, low: 58, condition: 'Partly cloudy' },
-      { date: getDateString(1), high: 75, low: 60, condition: 'Sunny' },
-      { date: getDateString(2), high: 70, low: 55, condition: 'Partly cloudy' },
-      { date: getDateString(3), high: 68, low: 52, condition: 'Light rain' },
-      { date: getDateString(4), high: 65, low: 50, condition: 'Partly cloudy' }
+      { date: getDateString(0), high: 58, low: 38, condition: 'Partly cloudy' },
+      { date: getDateString(1), high: 62, low: 41, condition: 'Sunny' },
+      { date: getDateString(2), high: 55, low: 36, condition: 'Thunderstorm' },
+      { date: getDateString(3), high: 49, low: 32, condition: 'Light rain' },
+      { date: getDateString(4), high: 53, low: 35, condition: 'Partly cloudy' }
     ]
   };
 }
 
 // Helper function to generate mock record dates
-function generateMockRecordDates(todayUTC) {
-  const longestDayDate = new Date(todayUTC);
-  longestDayDate.setUTCDate(longestDayDate.getUTCDate() - 5);
+function generateMockRecordDates(startDate) {
+  const longestDayDate = new Date(startDate);
+  longestDayDate.setUTCDate(longestDayDate.getUTCDate() + 2); // Day 3: Blood Mountain
 
-  const mostElevationGainDate = new Date(todayUTC);
-  mostElevationGainDate.setUTCDate(mostElevationGainDate.getUTCDate() - 3);
+  const mostElevationGainDate = new Date(startDate);
+  mostElevationGainDate.setUTCDate(mostElevationGainDate.getUTCDate() + 9); // Day 10: Smokies approach
 
   return {
     longestDayDate: longestDayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -43,28 +43,31 @@ function generateMockRecordDates(todayUTC) {
 }
 
 // Generate mock data for demo purposes
+// Snapshot: ~12 days in, approaching Fontana Dam, NC (mile ~165)
 export function getMockData(startDateStr) {
-  const { currentDay, todayUTC, startDate } = calculateCurrentDay(startDateStr);
+  const { todayUTC, startDate } = calculateCurrentDay(startDateStr);
 
-  const totalMiles = 330.0;
-  const milesRemaining = 1867.9;
-  const dailyDistance = 12.5;
-  const avgSpeed = 2.3;
+  const totalMiles = 165.2;
+  const milesRemaining = 2032.7;   // 2197.9 - 165.2
+  const dailyDistance = 14.8;      // Today: moderate day approaching Fontana
+  const avgSpeed = 2.4;            // Realistic for hilly terrain
 
-  const completedDays = currentDay > 1 ? currentDay - 1 : 1;
-  const avgDailyMiles = completedDays > 0 ? totalMiles / completedDays : 0;
-  const daysRemaining = avgDailyMiles > 0 ? Math.ceil(milesRemaining / avgDailyMiles) : 0;
+  // Hardcoded to match the 12-day mock GPS scenario regardless of today's date
+  const mockCurrentDay = 12;
+  const avgDailyMiles = totalMiles / (mockCurrentDay - 1);
+  const daysRemaining = Math.ceil(milesRemaining / avgDailyMiles);
   const estFinish = new Date(todayUTC);
   estFinish.setUTCDate(estFinish.getUTCDate() + daysRemaining);
 
-  const mockLat = 38.6270;
-  const mockLon = -78.3444;
+  // Near Fontana Dam, NC — consistent with mock points endpoint
+  const mockLat = 35.4094;
+  const mockLon = -83.7651;
 
   const mockWeather = generateMockWeather(todayUTC);
-  const recordDates = generateMockRecordDates(todayUTC);
+  const recordDates = generateMockRecordDates(startDate);
 
-  const longestDayMiles = 18.7;
-  const mostElevationGainFeet = 3420;
+  const longestDayMiles = 18.3;       // Day 3: Springer to Blood Mountain push
+  const mostElevationGainFeet = 4820; // Day 10: Smokies approach ridgeline
 
   return {
     startDate: startDate.toLocaleDateString('en-US'),
@@ -72,7 +75,7 @@ export function getMockData(startDateStr) {
     milesRemaining: milesRemaining.toFixed(1),
     dailyDistance: dailyDistance.toFixed(1),
     averageSpeed: avgSpeed.toFixed(1),
-    currentDayOnTrail: currentDay,
+    currentDayOnTrail: mockCurrentDay,
     estimatedFinishDate: estFinish.toLocaleDateString('en-US'),
     longestDayMiles: longestDayMiles.toFixed(1),
     longestDayDate: recordDates.longestDayDate,
@@ -83,48 +86,71 @@ export function getMockData(startDateStr) {
   };
 }
 
-// Generate mock elevation days (last 7 days)
+// Generate mock elevation days — 12 days from start date, newest first
+// (matches the 12-day span of mock GPS points)
 export function getMockElevationDays(startDateStr) {
   const days = [];
-  const today = new Date();
-  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const startDate = new Date(startDateStr + 'T00:00:00Z');
 
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(todayUTC);
-    date.setUTCDate(date.getUTCDate() - i);
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(startDate);
+    date.setUTCDate(date.getUTCDate() + i);
     days.push(getUTCDateString(date));
   }
 
   return days;
 }
 
+// AT terrain profiles by day offset — realistic PUD (Pointless Ups and Downs) patterns
+// Each entry: [elevationFt, hourOffset] — drawn from known trail segments
+const DAY_PROFILES = [
+  // Day 0: Springer Mountain → Hawk Mountain Shelter (~8mi, gentle start)
+  [[3782,0],[3450,1],[3100,2],[2800,3],[3200,4],[3500,5],[3250,6],[2900,7],[3050,8]],
+  // Day 1: Hawk Mountain → Neels Gap approach (~11mi)
+  [[3050,0],[2750,1],[3400,2],[3800,3],[3550,4],[3200,5],[3600,6],[4000,7],[3700,8]],
+  // Day 2: Blood Mountain & Neels Gap (~9mi, hardest day early on)
+  [[3700,0],[4100,1],[4458,2],[4200,3],[3820,4],[3200,5],[3550,6],[4100,7],[3900,8]],
+  // Day 3: Zero/town day (Dahlonega — flat, off-trail)
+  [[1500,0],[1480,2],[1510,4],[1490,6],[1520,8]],
+  // Day 4: Back on trail, Tesnatee Gap → Low Gap (~12mi)
+  [[3000,0],[2700,1],[3100,2],[3400,3],[3200,4],[2900,5],[3300,6],[3600,7],[3400,8]],
+  // Day 5: Low Gap → Tray Mountain (~13mi, big climb)
+  [[3400,0],[3100,1],[3600,2],[4100,3],[4430,4],[4000,5],[3700,6],[3300,7],[3100,8]],
+  // Day 6: Zero in Hiawassee (~4mi road walk, flat)
+  [[1900,0],[1870,2],[1920,4],[1880,6]],
+  // Day 7: Hiawassee → Muskrat Creek Shelter (~14mi, rolling ridges)
+  [[4200,0],[3800,1],[4100,2],[4500,3],[4200,4],[3900,5],[4300,6],[4600,7],[4400,8]],
+  // Day 8: Zero in Franklin, NC (mostly flat)
+  [[2100,0],[2080,2],[2120,4],[2090,6]],
+  // Day 9: Winding Stair Gap → Wayah Bald (~11mi)
+  [[4500,0],[4100,1],[4600,2],[5040,3],[4700,4],[4300,5],[4600,6],[4900,7],[4700,8]],
+  // Day 10: Wayah Bald → Wesser (~14mi, big descent into Nantahala)
+  [[5200,0],[4800,1],[4400,2],[3900,3],[3400,4],[2900,5],[2400,6],[1900,7],[1723,8]],
+  // Day 11: Resupply in Bryson City (flat town)
+  [[1740,0],[1720,2],[1760,4],[1730,6]],
+  // Day 12: Stecoah Gap → approaching Fontana (~14mi)
+  [[3200,0],[2800,1],[3400,2],[3800,3],[3500,4],[3100,5],[2700,6],[2400,7],[2100,8]],
+];
+
 // Generate mock elevation data for a specific day
 export function getMockElevationData(dateStr, startDateStr) {
-  const baseElevation = 2000;
   const points = [];
 
-  const date = new Date(dateStr + 'T06:00:00Z');
+  const startDate = new Date(startDateStr + 'T00:00:00Z');
+  const dayDate = new Date(dateStr + 'T00:00:00Z');
+  const dayOffset = Math.round((dayDate - startDate) / (24 * 60 * 60 * 1000));
 
-  for (let i = 0; i < 28; i++) {
-    const pointTime = new Date(date);
-    pointTime.setUTCHours(6 + Math.floor(i / 2));
-    pointTime.setUTCMinutes((i % 2) * 30);
+  const profileIndex = Math.max(0, Math.min(dayOffset, DAY_PROFILES.length - 1));
+  const profile = DAY_PROFILES[profileIndex];
 
-    const progress = i / 27;
-    let elevationVariation = 0;
+  for (let i = 0; i < profile.length; i++) {
+    const [baseElev, hourOffset] = profile[i];
+    const pointTime = new Date(dateStr + 'T06:00:00Z');
+    pointTime.setUTCHours(6 + hourOffset);
+    pointTime.setUTCMinutes(Math.floor(Math.random() * 30));
 
-    if (progress < 0.2) {
-      elevationVariation = progress * 0.2 * 1500;
-    } else if (progress < 0.4) {
-      elevationVariation = 0.2 * 1500 - (progress - 0.2) * 0.2 * 1000;
-    } else if (progress < 0.7) {
-      elevationVariation = 0.1 * 1500 + (progress - 0.4) * 0.3 * 2000;
-    } else {
-      elevationVariation = 0.7 * 2000 - (progress - 0.7) * 0.3 * 1500;
-    }
-
-    const randomVariation = (Math.random() - 0.5) * 100;
-    const elevation = Math.round(baseElevation + elevationVariation + randomVariation);
+    const randomVariation = (Math.random() - 0.5) * 80;
+    const elevation = Math.round(baseElev + randomVariation);
 
     points.push({
       time: pointTime.toISOString(),
