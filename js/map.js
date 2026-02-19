@@ -312,6 +312,10 @@
             return;
         }
 
+        // Update tracker status before rendering so it's always set
+        // even if a Leaflet rendering exception occurs later
+        updateTrackerStatus(points);
+
         pointsLayer = L.layerGroup();
 
         // Separate on-trail and off-trail points
@@ -389,9 +393,6 @@
             map.setView(currentMarker.getLatLng(), 13);
             hasInitiallyFocused = true;
         }
-
-        // Update tracker status indicator
-        updateTrackerStatus(points);
     }
 
     function updateTrackerStatus(points) {
