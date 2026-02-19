@@ -329,8 +329,11 @@
      */
     function updateDailySpeed(speed) {
         const el = document.getElementById('avg-speed');
-        if (el) {
-            el.textContent = speed !== null ? speed.toFixed(1) : '—';
+        if (!el) return;
+        el.textContent = speed !== null ? speed.toFixed(1) : '—';
+        if (speed !== null) {
+            const placeholder = el.closest('.stat-card')?.querySelector('.stat-placeholder');
+            if (placeholder) placeholder.style.display = 'none';
         }
     }
 
