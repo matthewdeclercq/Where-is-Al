@@ -212,19 +212,24 @@
         // Update navigation buttons
         updateNavigationButtons();
 
-        // Show loading state
         const placeholder = document.querySelector('.elevation-placeholder');
         const dailyContent = document.getElementById('daily-performance-content');
-        if (placeholder) {
-            placeholder.textContent = 'Loading elevation data...';
-            placeholder.style.display = 'block';
-        }
-        if (dailyContent) dailyContent.style.display = 'none';
-
-        // Hide chart container
         const chartContainer = document.querySelector('.elevation-chart-container');
-        if (chartContainer) {
-            chartContainer.style.display = 'none';
+        const hasExistingContent = state.chart !== null;
+
+        if (hasExistingContent) {
+            // Keep existing content visible while loading to avoid layout jump;
+            // dim it slightly to signal a refresh is in progress
+            if (dailyContent) dailyContent.style.opacity = '0.4';
+            if (chartContainer) chartContainer.style.opacity = '0.4';
+        } else {
+            // First load — nothing to show yet, display the loading placeholder
+            if (placeholder) {
+                placeholder.textContent = 'Loading elevation data...';
+                placeholder.style.display = 'block';
+            }
+            if (dailyContent) dailyContent.style.display = 'none';
+            if (chartContainer) chartContainer.style.display = 'none';
         }
 
         // Fetch and display elevation data
@@ -232,8 +237,14 @@
 
         // Ignore stale response if user switched to a different day while fetching
         if (state.selectedDay !== day) {
+            if (dailyContent) dailyContent.style.opacity = '';
+            if (chartContainer) chartContainer.style.opacity = '';
             return;
         }
+
+        // Restore opacity regardless of outcome
+        if (dailyContent) dailyContent.style.opacity = '';
+        if (chartContainer) chartContainer.style.opacity = '';
 
         const clearChart = () => {
             if (state.chart) {
