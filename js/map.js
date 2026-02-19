@@ -273,6 +273,7 @@
             },
             onError: function(error) {
                 console.error('[Map] Failed to fetch points:', error.message);
+                updateTrackerStatus([]);
             }
         }, state);
     }
@@ -307,6 +308,7 @@
         }
 
         if (!points || points.length === 0) {
+            updateTrackerStatus([]);
             return;
         }
 

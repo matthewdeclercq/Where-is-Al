@@ -133,5 +133,15 @@ function generateMockPoints(startDateStr, thresholdMiles) {
     }
   }
 
+  // Shift all timestamps so the last ping is 10 minutes ago, making the
+  // tracker appear live (ON) in mock mode regardless of START_DATE's age.
+  if (points.length > 0) {
+    const lastTime = new Date(points[points.length - 1].time).getTime();
+    const offset = (Date.now() - 10 * 60 * 1000) - lastTime;
+    for (const p of points) {
+      p.time = new Date(new Date(p.time).getTime() + offset).toISOString();
+    }
+  }
+
   return points;
 }
