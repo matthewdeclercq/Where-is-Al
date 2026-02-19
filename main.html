@@ -39,30 +39,41 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
-    <header class="site-header">
-        <h1>Where is Al?</h1>
+    <header class="site-header" id="site-header">
+        <div class="site-header-inner">
+            <h1 class="site-header-title">
+                <img src="assets/favicon-96x96.png" class="site-header-logo" alt="">
+                Where is Al?
+            </h1>
+            <div class="site-header-status">
+                <span class="tracker-status-dot" id="header-tracker-dot"></span>
+                <span class="site-header-status-text" id="header-tracker-label">Tracker: --</span>
+                <span class="site-header-status-divider" aria-hidden="true">·</span>
+                <span class="site-header-updated" id="header-last-updated">--</span>
+            </div>
+        </div>
     </header>
 
     <main>
-        <p>Al is somewhere on the Appalachian Trail — follow his journey here!</p>
+        <p>Al is somewhere on the Appalachian Trail — follow his journey!</p>
         <!-- Live Map Section -->
         <section class="map-section" aria-label="Live trail map">
             <h2 class="section-title">Live Trail Map</h2>
-            <div class="map-legend">
-                <span class="legend-item" id="tracker-status">
-                    <span class="tracker-status-dot" id="tracker-status-dot"></span>
-                    <span id="tracker-status-label">Tracker: --</span>
-                </span>
-                <span class="legend-divider"></span>
-                <span class="legend-item"><span class="legend-line legend-trail"></span> AT Trail</span>
-                <span class="legend-item"><span class="legend-dot legend-on-trail"></span> On Trail</span>
-                <span class="legend-item"><span class="legend-dot legend-off-trail"></span> Off Trail</span>
-                <span class="legend-item"><span class="legend-dot legend-current"></span> Current</span>
-                <span class="legend-item"><span class="legend-line legend-route"></span> Route</span>
-                <span class="legend-item"><i class="fas fa-mountain legend-milestone-icon"></i> Milestone</span>
-                <span class="legend-item"><i class="fas fa-drumstick-bite legend-chicken-icon"></i> Fried Chicken</span>
-            </div>
             <div class="map-container">
+                <div class="map-legend">
+                    <span class="legend-item" id="tracker-status">
+                        <span class="tracker-status-dot" id="tracker-status-dot"></span>
+                        <span id="tracker-status-label">Tracker: --</span>
+                    </span>
+                    <span class="legend-divider"></span>
+                    <span class="legend-item"><span class="legend-line legend-trail"></span> AT Trail</span>
+                    <span class="legend-item"><span class="legend-dot legend-on-trail"></span> On Trail</span>
+                    <span class="legend-item"><span class="legend-dot legend-off-trail"></span> Off Trail</span>
+                    <span class="legend-item"><span class="legend-dot legend-current"><img src="assets/favicon-96x96.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;"></span> Current</span>
+                    <span class="legend-item"><span class="legend-line legend-route"></span> Route</span>
+                    <span class="legend-item"><i class="fas fa-mountain legend-milestone-icon"></i> Milestone</span>
+                    <span class="legend-item"><i class="fas fa-drumstick-bite legend-chicken-icon"></i> Fried Chicken</span>
+                </div>
                 <div id="leaflet-map"></div>
             </div>
         </section>
@@ -272,9 +283,8 @@
     </main>
 
     <footer class="site-footer">
-        <p>Following Al's Appalachian Trail adventure</p>
+        <p>Report any issues or suggestions to <a href="mailto:matthew@coppertech.us">matthew@coppertech.us</a></p>
         <p>&copy; 2026 Copper Tech LLC. All rights reserved.</p>
-        <p>Report any issues to <a href="mailto:matthew@coppertech.co">matthew@coppertech.co</a></p>
     </footer>
 
     <script src="js/utils.js"></script>
@@ -303,6 +313,28 @@
     <script src="js/stats.js"></script>
     <script src="js/weather.js"></script>
     <script src="js/elevation.js"></script>
+    <script>
+    (function() {
+        'use strict';
+        var header = document.getElementById('site-header');
+        if (!header) return;
+        var SCROLL_ADD = 50;
+        var SCROLL_REMOVE = 30;
+        function onScroll() {
+            var y = window.scrollY;
+            if (y > SCROLL_ADD) {
+                header.classList.add('scrolled');
+            } else if (y < SCROLL_REMOVE) {
+                header.classList.remove('scrolled');
+            }
+            // between 30–50px: keep current state (hysteresis dead zone)
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('beforeunload', function() {
+            window.removeEventListener('scroll', onScroll);
+        });
+    })();
+    </script>
 </body>
 </html>
 

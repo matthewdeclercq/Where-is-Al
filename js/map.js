@@ -326,14 +326,14 @@
                 var isRecent = pointAge < 24 * 60 * 60 * 1000; // within 24 hours
                 var positionLabel = isRecent ? 'Current Position' : 'Last Known Position';
 
-                currentMarker = L.circleMarker([point.lat, point.lon], {
-                    radius: 12,
-                    fillColor: MapConfig.currentPositionColor,
-                    color: MapConfig.currentPositionBorder,
-                    weight: 3,
-                    opacity: 1,
-                    fillOpacity: 1
+                var currentIcon = L.divIcon({
+                    html: '<div style="width:30px;height:30px;border-radius:50%;background:' + MapConfig.currentPositionColor + ';border:3px solid ' + MapConfig.currentPositionBorder + ';overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="assets/favicon-96x96.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"></div>',
+                    className: '',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15],
+                    popupAnchor: [0, -18]
                 });
+                currentMarker = L.marker([point.lat, point.lon], { icon: currentIcon });
 
                 var timeStr = point.time ? new Date(point.time).toLocaleString() : 'Unknown';
                 var elevStr = point.elevation != null ? point.elevation + ' ft' : 'N/A';
@@ -406,24 +406,43 @@
     function updateTrackerStatus(points) {
         var dot = document.getElementById('tracker-status-dot');
         var label = document.getElementById('tracker-status-label');
-        if (!dot || !label) return;
+        var headerDot = document.getElementById('header-tracker-dot');
+        var headerLabel = document.getElementById('header-tracker-label');
+        var headerUpdated = document.getElementById('header-last-updated');
 
         var lastPoint = points.length > 0 ? points[points.length - 1] : null;
         var THIRTY_MIN = 30 * 60 * 1000;
 
         if (lastPoint && lastPoint.time) {
             var age = Date.now() - new Date(lastPoint.time).getTime();
-            if (age < THIRTY_MIN) {
-                dot.className = 'tracker-status-dot tracker-on';
-                label.textContent = 'Tracker: ON';
-            } else {
-                dot.className = 'tracker-status-dot tracker-off';
-                label.textContent = 'Tracker: OFF';
-            }
+            var isOn = age < THIRTY_MIN;
+            var statusClass = isOn ? 'tracker-status-dot tracker-on' : 'tracker-status-dot tracker-off';
+            var statusText = isOn ? 'Tracker: ON' : 'Tracker: OFF';
+
+            if (dot) { dot.className = statusClass; }
+            if (label) { label.textContent = statusText; }
+            if (headerDot) { headerDot.className = statusClass; }
+            if (headerLabel) { headerLabel.textContent = statusText; }
+            if (headerUpdated) { headerUpdated.textContent = formatRelativeTime(age); }
         } else {
-            dot.className = 'tracker-status-dot tracker-off';
-            label.textContent = 'Tracker: OFF';
+            var offClass = 'tracker-status-dot tracker-off';
+            if (dot) { dot.className = offClass; }
+            if (label) { label.textContent = 'Tracker: OFF'; }
+            if (headerDot) { headerDot.className = offClass; }
+            if (headerLabel) { headerLabel.textContent = 'Tracker: OFF'; }
+            if (headerUpdated) { headerUpdated.textContent = 'Last updated unknown'; }
         }
+    }
+
+    function formatRelativeTime(ageMs) {
+        var sec = Math.floor(ageMs / 1000);
+        if (sec < 60) { return 'Last updated just now'; }
+        var min = Math.floor(sec / 60);
+        if (min < 60) { return 'Last updated ' + min + (min === 1 ? ' minute ago' : ' minutes ago'); }
+        var hr = Math.floor(min / 60);
+        if (hr < 24) { return 'Last updated ' + hr + (hr === 1 ? ' hour ago' : ' hours ago'); }
+        var days = Math.floor(hr / 24);
+        return 'Last updated ' + days + (days === 1 ? ' day ago' : ' days ago');
     }
 
     function setupAutoRefresh() {
