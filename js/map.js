@@ -33,7 +33,7 @@
     let milestonesLayer = null;
     let chickenLayer = null;
     let pointsLayer = null;
-    let routeLineLayer = null;
+
     let currentMarker = null;
     let hasInitiallyFocused = false;
 
@@ -191,6 +191,7 @@
                         lineJoin: 'round'
                     }
                 }).addTo(map);
+                if (pointsLayer) pointsLayer.bringToFront();
             })
             .catch(function(error) {
                 console.error('[Map] Failed to load trail data:', error);
@@ -301,9 +302,6 @@
         if (pointsLayer) {
             map.removeLayer(pointsLayer);
         }
-        if (routeLineLayer) {
-            map.removeLayer(routeLineLayer);
-        }
         if (currentMarker) {
             map.removeLayer(currentMarker);
         }
@@ -382,17 +380,7 @@
         });
 
         pointsLayer.addTo(map);
-
-        // Draw dashed route line through on-trail points
-        if (onTrailCoords.length > 1) {
-            routeLineLayer = L.polyline(onTrailCoords, {
-                color: MapConfig.routeLineColor,
-                weight: 3,
-                opacity: 0.8,
-                dashArray: '10, 6',
-                lineCap: 'round'
-            }).addTo(map);
-        }
+        pointsLayer.bringToFront();
 
         // On first load, center on current position
         if (!hasInitiallyFocused && currentMarker) {
