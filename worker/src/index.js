@@ -54,6 +54,12 @@ export default {
       });
     }
 
+    // Geo-restrict to US and Canada
+    const country = request.cf?.country;
+    if (country && country !== 'US' && country !== 'CA') {
+      return createErrorResponse(403, 'Access restricted', request);
+    }
+
     // Handle authentication endpoint (public, no token required)
     if (url.pathname === '/auth' && request.method === 'POST') {
       return handleAuth(request, env);
