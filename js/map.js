@@ -133,7 +133,7 @@
             center: MapConfig.defaultCenter,
             zoom: MapConfig.defaultZoom,
             zoomControl: false,
-            scrollWheelZoom: true
+            gestureHandling: true
         });
         L.control.zoom({ position: 'topright' }).addTo(map);
 
