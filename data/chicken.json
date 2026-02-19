@@ -112,6 +112,13 @@
         "lon": -79.073
     },
     {
+        "name": "Southern Kitchen Restaurant",
+        "description": "Historic family-style restaurant (since 1955) with award-winning fried chicken at 9576 US-11, New Market",
+        "state": "Virginia",
+        "lat": 38.643,
+        "lon": -78.675
+    },
+    {
         "name": "Spelunker's Frozen Custard & Grill",
         "description": "Local grill with fried chicken sandwiches",
         "state": "Virginia",
