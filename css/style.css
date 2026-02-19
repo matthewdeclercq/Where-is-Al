@@ -671,22 +671,47 @@ main > p:first-of-type {
 
 .legend-on-trail {
     background: #06b6d4;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
 }
 
 .legend-off-trail {
-    background: #f97316;
+    background: #facc15;
     border: 2px solid #1a1a1a;
     box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
 
 .legend-current {
-    background: #facc15;
     border: 2px solid #1a1a1a;
     width: 14px;
     height: 14px;
     overflow: hidden;
+}
+
+.legend-current.legend-current-on {
+    background: #22c55e;
+    animation: pulse-green-marker 2s ease-in-out infinite;
+}
+
+.legend-current.legend-current-off {
+    background: #ef4444;
+    animation: pulse-red-marker 2s ease-in-out infinite;
+}
+
+.current-marker-on {
+    animation: pulse-green-marker 2s ease-in-out infinite;
+}
+
+.current-marker-off {
+    animation: pulse-red-marker 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green-marker {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    50% { box-shadow: 0 0 10px 5px rgba(34, 197, 94, 0.4); }
+}
+
+@keyframes pulse-red-marker {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    50% { box-shadow: 0 0 10px 5px rgba(239, 68, 68, 0.4); }
 }
 
 .legend-route {

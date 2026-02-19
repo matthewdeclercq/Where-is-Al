@@ -11,7 +11,7 @@
         trailWeight: 4,
         trailOpacity: 0.85,
         onTrailColor: '#06b6d4',
-        offTrailColor: '#f97316',
+        offTrailColor: '#facc15',
         currentPositionColor: '#facc15',
         currentPositionBorder: '#1a1a1a',
         routeLineColor: '#06b6d4',
@@ -95,6 +95,9 @@
         const wrapper = mapSection;
         if (!wrapper) return;
 
+        var savedCenter = map ? map.getCenter() : null;
+        var savedZoom = map ? map.getZoom() : null;
+
         if (wrapper.classList.contains('map-fullscreen')) {
             wrapper.classList.remove('map-fullscreen');
             document.body.style.overflow = '';
@@ -115,6 +118,9 @@
             setTimeout(function() {
                 if (map) {
                     map.invalidateSize({ animate: false, pan: false });
+                    if (savedCenter) {
+                        map.setView(savedCenter, savedZoom, { animate: false });
+                    }
                     map.fire('moveend');
                 }
             }, 50);
@@ -330,9 +336,12 @@
                 var pointAge = point.time ? (Date.now() - new Date(point.time).getTime()) : Infinity;
                 var isRecent = pointAge < 24 * 60 * 60 * 1000; // within 24 hours
                 var positionLabel = isRecent ? 'Current Position' : 'Last Known Position';
+                var isTrackerOn = pointAge < 30 * 60 * 1000;
+                var markerColor = isTrackerOn ? '#22c55e' : '#ef4444';
+                var markerPulseClass = isTrackerOn ? 'current-marker-on' : 'current-marker-off';
 
                 var currentIcon = L.divIcon({
-                    html: '<div style="width:30px;height:30px;border-radius:50%;background:' + MapConfig.currentPositionColor + ';border:3px solid ' + MapConfig.currentPositionBorder + ';overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="assets/favicon-96x96.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"></div>',
+                    html: '<div class="' + markerPulseClass + '" style="width:30px;height:30px;border-radius:50%;background:' + markerColor + ';border:3px solid ' + MapConfig.currentPositionBorder + ';overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="assets/favicon-96x96.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"></div>',
                     className: '',
                     iconSize: [30, 30],
                     iconAnchor: [15, 15],
@@ -354,7 +363,7 @@
                 // Regular point
                 var color = isOnTrail ? MapConfig.onTrailColor : MapConfig.offTrailColor;
                 var radius = isOnTrail ? 7 : 8;
-                var borderColor = isOnTrail ? '#ffffff' : '#1a1a1a';
+                var borderColor = isOnTrail ? MapConfig.onTrailColor : '#1a1a1a';
 
                 var marker = L.circleMarker([point.lat, point.lon], {
                     radius: radius,
@@ -405,24 +414,33 @@
         var lastPoint = points.length > 0 ? points[points.length - 1] : null;
         var THIRTY_MIN = 30 * 60 * 1000;
 
+        var legendCurrentDot = document.querySelector('.legend-current');
+
         if (lastPoint && lastPoint.time) {
             var age = Date.now() - new Date(lastPoint.time).getTime();
             var isOn = age < THIRTY_MIN;
             var statusClass = isOn ? 'tracker-status-dot tracker-on' : 'tracker-status-dot tracker-off';
-            var statusText = isOn ? 'Tracker: ON' : 'Tracker: OFF';
 
             if (dot) { dot.className = statusClass; }
-            if (label) { label.textContent = statusText; }
+            if (label) { label.textContent = isOn ? 'Current (Tracker ON)' : 'Last Known (Tracker OFF)'; }
             if (headerDot) { headerDot.className = statusClass; }
-            if (headerLabel) { headerLabel.textContent = statusText; }
+            if (headerLabel) { headerLabel.textContent = isOn ? 'Tracker: ON' : 'Tracker: OFF'; }
             if (headerUpdated) { headerUpdated.textContent = formatRelativeTime(age); }
+            if (legendCurrentDot) {
+                legendCurrentDot.classList.remove('legend-current-on', 'legend-current-off');
+                legendCurrentDot.classList.add(isOn ? 'legend-current-on' : 'legend-current-off');
+            }
         } else {
             var offClass = 'tracker-status-dot tracker-off';
             if (dot) { dot.className = offClass; }
-            if (label) { label.textContent = 'Tracker: OFF'; }
+            if (label) { label.textContent = 'Last Known (Tracker OFF)'; }
             if (headerDot) { headerDot.className = offClass; }
             if (headerLabel) { headerLabel.textContent = 'Tracker: OFF'; }
             if (headerUpdated) { headerUpdated.textContent = 'Last updated unknown'; }
+            if (legendCurrentDot) {
+                legendCurrentDot.classList.remove('legend-current-on', 'legend-current-off');
+                legendCurrentDot.classList.add('legend-current-off');
+            }
         }
     }
 
