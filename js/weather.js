@@ -563,9 +563,15 @@
     }
 
     // Initialize when DOM is ready and Chart.js is loaded
+    let initRetries = 0;
+    const MAX_INIT_RETRIES = 50;
     function checkAndInitialize() {
         // Check if Chart.js is available
         if (typeof Chart === 'undefined') {
+            if (initRetries++ >= MAX_INIT_RETRIES) {
+                console.error('[Weather] Chart.js failed to load after 5 seconds.');
+                return;
+            }
             setTimeout(checkAndInitialize, 100);
             return;
         }

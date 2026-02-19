@@ -44,11 +44,11 @@
     }, 200);
 
     function createMapControl(options) {
-        var Control = L.Control.extend({
+        const Control = L.Control.extend({
             options: { position: 'topright' },
             onAdd: function() {
-                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control' + (options.containerClass ? ' ' + options.containerClass : ''));
-                var button = L.DomUtil.create('a', 'map-fullscreen-button', container);
+                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control' + (options.containerClass ? ' ' + options.containerClass : ''));
+                const button = L.DomUtil.create('a', 'map-fullscreen-button', container);
                 button.href = '#';
                 button.title = options.title;
                 button.setAttribute('role', 'button');
@@ -92,7 +92,7 @@
     }
 
     function toggleFullscreen(button) {
-        var wrapper = mapSection;
+        const wrapper = mapSection;
         if (!wrapper) return;
 
         if (wrapper.classList.contains('map-fullscreen')) {

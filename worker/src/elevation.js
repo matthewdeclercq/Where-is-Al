@@ -5,7 +5,7 @@ import { getElevation } from './utils.js';
 import { DATE_REGEX, MOVING_VELOCITY_THRESHOLD_MPH } from './constants.js';
 import { haversine } from './geo.js';
 
-const hasElevationData = p => getElevation(p) !== null;
+const pointHasElevation = p => getElevation(p) !== null;
 
 // Elevation handler
 export async function handleElevation(request, env) {
@@ -79,7 +79,7 @@ export async function handleElevationDays(request, env) {
         const dayPointsJson = await env.TRAIL_HISTORY.get(key.name);
         if (dayPointsJson) {
           const dayPoints = JSON.parse(dayPointsJson);
-          return dayPoints.some(hasElevationData) ? dateStr : null;
+          return dayPoints.some(pointHasElevation) ? dateStr : null;
         }
       } catch (error) {
         console.error(`[Elevation] Failed to read ${key.name}:`, error);
@@ -117,7 +117,7 @@ export async function getElevationByDay(dateStr, env) {
     const dayPoints = JSON.parse(dayPointsJson);
 
     const elevationPoints = dayPoints
-      .filter(hasElevationData)
+      .filter(pointHasElevation)
       .map(p => ({
         time: p.time,
         elevation: Math.round(getElevation(p) * 10) / 10

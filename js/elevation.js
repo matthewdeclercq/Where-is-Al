@@ -61,7 +61,8 @@
                 state
             );
             return data?.days || [];
-        } catch {
+        } catch (e) {
+            console.error('[Elevation] Failed to fetch available days:', e);
             return [];
         }
     }
@@ -92,7 +93,8 @@
                 state
             );
             return data ?? null;
-        } catch {
+        } catch (e) {
+            console.error('[Elevation] Failed to fetch elevation data:', e);
             return null;
         }
     }

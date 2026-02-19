@@ -84,7 +84,8 @@
                 if (attempts >= MAX_ATTEMPTS) {
                     lockoutUntil = Date.now() + LOCKOUT_TIME;
                     sessionStorage.setItem('lockout_until', lockoutUntil.toString());
-                    showError(`Too many attempts. Locked for 15 minutes.`);
+                    const lockoutMinutes = Math.round(LOCKOUT_TIME / 60000);
+                    showError(`Too many attempts. Locked for ${lockoutMinutes} minutes.`);
                 } else {
                     const remaining = MAX_ATTEMPTS - attempts;
                     showError(`Nice try! Ask Al for the magic word. (${remaining} attempt${remaining !== 1 ? 's' : ''} remaining)`);
