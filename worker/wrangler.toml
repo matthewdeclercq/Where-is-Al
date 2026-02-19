@@ -15,7 +15,7 @@ id = "f7b75c01987e46fe9ab1b7a110cb12bd"
 # Non-secret environment variables
 [vars]
 MAPSHARE_ID = "J8EKHXCDB5"
-START_DATE = "2025-03-01"
+START_DATE = "2026-03-03"
 START_LAT = "34.6269"
 START_LON = "-84.1939"
 
