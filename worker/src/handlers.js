@@ -1,11 +1,11 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
-import { validateEnvOrError, buildKmlUrl, buildKmlFetchOptions } from './utils.js';
+import { validateEnvOrError, buildKmlUrl, buildKmlFetchOptions, getOffTrailThreshold } from './utils.js';
 import { getMockData } from './mock.js';
 import { parseKmlPoints } from './kml.js';
 import { calculateStats } from './stats.js';
 import { loadHistoricalPoints, storePointsByDay } from './storage.js';
 import { fetchWeatherCached } from './weather.js';
-import { TOTAL_TRAIL_MILES, DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
+import { TOTAL_TRAIL_MILES } from './constants.js';
 import { tagAndSnapPoints } from './trail-distance.js';
 
 // Stats handler — reads points from KV only (cron handles KML polling)
@@ -32,16 +32,16 @@ export async function handleStats(request, env) {
       if (cached && Date.now() - cached.timestamp < 60000) {
         return createSuccessResponse(cached.data, request, { 'Cache-Control': 'public, max-age=60' });
       }
-    } catch (_) {}
+    } catch (cacheError) {
+      console.warn('[Handler] Stats cache read failed, recomputing:', cacheError.message);
+    }
   }
 
   try {
     const allPoints = await loadHistoricalPoints(START_DATE_STR, env);
 
     // Tag points as on/off trail and snap to trail in a single pass
-    const parsed = parseFloat(env.OFF_TRAIL_THRESHOLD);
-    const thresholdMiles = Number.isFinite(parsed) ? parsed : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
-    tagAndSnapPoints(allPoints, undefined, thresholdMiles);
+    tagAndSnapPoints(allPoints, undefined, getOffTrailThreshold(env));
 
     const stats = calculateStats(allPoints, START_DATE_STR, TOTAL_TRAIL_MILES, { filterOffTrail: true });
 

@@ -230,6 +230,11 @@
         // Fetch and display elevation data
         const elevationData = await fetchElevationData(day);
 
+        // Ignore stale response if user switched to a different day while fetching
+        if (state.selectedDay !== day) {
+            return;
+        }
+
         const clearChart = () => {
             if (state.chart) {
                 state.chart.destroy();
@@ -339,7 +344,10 @@
         return points.filter(point => {
             if (!point.time) return false;
             const date = new Date(point.time);
-            const hour = ((date.getUTCHours() - 4) + 24) % 24; // UTC to EDT (offset -4); note: uses EDT year-round, not EST (-5) in winter
+            const hour = parseInt(
+                new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/New_York' })
+                    .format(date), 10
+            );
             // Include points from 6am (6) to 8pm (20, inclusive)
             return hour >= 6 && hour <= 20;
         });

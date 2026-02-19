@@ -85,7 +85,7 @@ Each feature module (stats, weather, elevation, map) follows this pattern:
 **Cloudflare Worker Integration:**
 - Worker URL configured in `js/config.js` (`Config.workerUrl`)
 - Worker aggregates data from multiple sources (Garmin inReach, weather APIs, etc.)
-- Endpoints: `/auth`, `/` (stats), `/points`, `/elevation`, `/elevation?day=YYYY-MM-DD`
+- Endpoints: `/auth` (POST), `/` (stats, GET), `/points` (GET), `/elevation` (GET), `/elevation?day=YYYY-MM-DD` (GET), `/sync` (POST)
 
 ### API Client Pattern
 
@@ -103,8 +103,12 @@ Each feature module (stats, weather, elevation, map) follows this pattern:
 
 **Visibility-Aware Polling:**
 - Modules pause polling when page is hidden (`document.hidden`)
+- When the page is hidden, `ApiClient.fetch()` returns `Promise.resolve()` immediately with no callbacks invoked (avoids spurious errors)
 - Resume polling + immediate fetch when page becomes visible
 - Coordinated through `Utils.VisibilityManager` (single event listener)
+
+**Token Expiry:**
+- If `auth_expires` in sessionStorage is past, `ApiClient.fetch()` clears the token and redirects to `index.html` immediately (no error callback)
 
 **Usage:**
 ```javascript
@@ -173,7 +177,8 @@ Weather and elevation modules use Chart.js for visualizations:
 GPS pings are snapped to the known AT trail to get accurate distance and elevation:
 
 **Pipeline (runs in `handlers.js` and `points-handler.js`):**
-- `tagAndSnapPoints()` — Single-pass function in `trail-distance.js` that tags each point as on/off-trail AND snaps on-trail points to get `trailMile` + `trailElevation` in one loop over trail segments. Replaces the old two-pass `tagPointsOnOffTrail()` + `snapPointsToTrail()` calls, halving `projectToSegment()` invocations. Uses `DEFAULT_OFF_TRAIL_THRESHOLD_MILES` (0.25mi) from `constants.js` and includes an early-exit when `bestDist < 0.001` miles.
+- `tagAndSnapPoints()` — Single-pass function in `trail-distance.js` that tags each point as on/off-trail AND snaps on-trail points to get `trailMile` + `trailElevation` in one loop over trail segments. Halves `projectToSegment()` invocations vs. a two-pass approach. Uses `DEFAULT_OFF_TRAIL_THRESHOLD_MILES` (0.25mi) from `constants.js` and includes an early-exit when `bestDist < 0.001` miles.
+- The `OFF_TRAIL_THRESHOLD` env var is parsed via `getOffTrailThreshold(env)` in `utils.js` — both handlers use this helper instead of duplicating the parse logic.
 
 **Distance calculation (`stats.js`):**
 - Total miles = highest `trailMile` among on-trail points (furthest progress)
@@ -243,21 +248,20 @@ The Cloudflare Worker lives in `worker/` and is split into ES modules under `wor
 | `constants.js` | Shared constants |
 | `cors.js` | CORS origin handling |
 | `responses.js` | Response helpers |
-| `utils.js` | Date helpers, KML URL builder, env validation, `groupPointsByDate`, `calculateCurrentDay`, `getElevation` |
+| `utils.js` | Date helpers, KML URL builder, env validation, `groupPointsByDate`, `calculateCurrentDay`, `getElevation`, `getOffTrailThreshold` |
 | `auth.js` | Token management and `/auth` handler |
 | `kml.js` | KML parser |
 | `geo.js` | Haversine distance, segment projection (`projectToSegment`) |
 | `stats.js` | Trail statistics calculator (uses trail-mile deltas) |
 | `storage.js` | KV read/write, point serialization (`serializePoint`); `deduplicateStationary()` collapses consecutive pings within 100ft into one annotated point (`stationaryPings`, `lastPingTime`) |
-| `weather.js` | Open-Meteo weather API; `fetchWeatherCached()` wraps `fetchWeather()` with 12-hour KV cache; serves stale cache on error to prevent rate-limit spirals |
+| `weather.js` | Open-Meteo weather API; `fetchWeatherCached()` wraps `fetchWeather()` with 12-hour KV cache; serves stale cache on error to prevent rate-limit spirals; both the weather and geocode fetches have AbortController timeouts (10s and 3s respectively) |
 | `elevation.js` | `/elevation` endpoint handlers (prefers DEM elevation) |
-| `handlers.js` | `/` and `/sync` endpoint handlers; stats response is KV-cached for 60s to avoid redundant trail computation |
+| `handlers.js` | `GET /` (stats) and `POST /sync` endpoint handlers; stats response is KV-cached for 60s to avoid redundant trail computation; KV cache read failures are logged at warn level |
 | `points-handler.js` | `/points` endpoint handler |
 | `mock.js` | Mock data for demos |
 | `at-trail-simplified.js` | Simplified AT coordinates (4,822 pts) for on/off-trail detection |
 | `at-trail-with-miles.js` | Generated: AT coordinates with cumulative miles + DEM elevation |
-| `trail-proximity.js` | `distanceToTrail()`, `tagPointsOnOffTrail()` for on/off-trail tagging |
-| `trail-distance.js` | `snapToTrail()`, `snapPointsToTrail()` for trail-mile snapping; `tagAndSnapPoints()` for combined single-pass tag+snap |
+| `trail-distance.js` | `tagAndSnapPoints()` — combined single-pass tag+snap (only exported function; `trail-proximity.js` was deleted, `snapToTrail`/`snapPointsToTrail` were removed as dead code) |
 
 Deployed via `npm run deploy:worker` (uses `wrangler deploy`).
 

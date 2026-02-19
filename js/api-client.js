@@ -67,17 +67,8 @@
                 return pendingRequests.get(url);
             }
 
-            // Prevent concurrent requests from same module
-            if (state.isLoading) {
-                return Promise.resolve();
-            }
-
             // Don't fetch if page is hidden
             if (!isPageVisible) {
-                // Still call error callback if provided
-                if (callbacks && callbacks.onError) {
-                    callbacks.onError(new Error('[ApiClient] Page is hidden, request skipped'));
-                }
                 return Promise.resolve();
             }
             
@@ -116,13 +107,9 @@
                     // Check token expiry
                     const expires = sessionStorage.getItem('auth_expires');
                     if (expires && Date.now() >= parseInt(expires)) {
-                        console.warn('[ApiClient] Token expired, clearing sessionStorage');
                         sessionStorage.removeItem('auth_token');
                         sessionStorage.removeItem('auth_expires');
-                        const error = new Error('[ApiClient] Token expired - please re-authenticate');
-                        state.isLoading = false;
-                        invokeCallbacks(url, false, error);
-                        rejectPromise(error);
+                        window.location.href = 'index.html';
                         return;
                     }
 

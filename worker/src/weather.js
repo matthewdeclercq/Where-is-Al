@@ -81,9 +81,11 @@ export async function fetchWeather(lat, lon) {
 
   const geocodeController = new AbortController();
   const geocodeTimeout = setTimeout(() => geocodeController.abort(), 3000);
+  const weatherController = new AbortController();
+  const weatherTimeout = setTimeout(() => weatherController.abort(), 10000);
 
   const [weatherResponse, geocodeResponse] = await Promise.allSettled([
-    fetch(url),
+    fetch(url, { signal: weatherController.signal }).finally(() => clearTimeout(weatherTimeout)),
     fetch(geocodeUrl, { signal: geocodeController.signal }).finally(() => clearTimeout(geocodeTimeout))
   ]);
 

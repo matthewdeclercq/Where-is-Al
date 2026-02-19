@@ -60,7 +60,7 @@ export default {
     }
 
     // Handle sync endpoint (requires authentication)
-    if (url.pathname === '/sync' && request.method === 'GET') {
+    if (url.pathname === '/sync' && request.method === 'POST') {
       const authError = await requireAuth(request, env);
       if (authError) return authError;
       return handleSync(request, env);

@@ -37,6 +37,12 @@
     let currentMarker = null;
     let hasInitiallyFocused = false;
 
+    const resizeHandler = Utils.debounce(function() {
+        if (map) {
+            map.invalidateSize();
+        }
+    }, 200);
+
     function createMapControl(options) {
         var Control = L.Control.extend({
             options: { position: 'topright' },
@@ -166,11 +172,6 @@
         });
 
         // Handle resize
-        var resizeHandler = Utils.debounce(function() {
-            if (map) {
-                map.invalidateSize();
-            }
-        }, 200);
         window.addEventListener('resize', resizeHandler);
     }
 
@@ -456,6 +457,7 @@
     function cleanup() {
         window.ApiClient.cleanup(state);
         Utils.VisibilityManager.unregister(handleVisibilityChange);
+        window.removeEventListener('resize', resizeHandler);
         if (map) {
             map.remove();
             map = null;

@@ -458,21 +458,7 @@
                 { method: 'GET' },
                 {
                     onSuccess: (data) => {
-                        if (!data || !data.weather) {
-                            if (!data || data.weather === null) {
-                                showWeatherPlaceholder('Weather data will appear here once Al\'s location is available.');
-                            } else {
-                                showWeatherPlaceholder('Weather data temporarily unavailable.');
-                            }
-                            return;
-                        }
-                        
-                        try {
-                            updateWeatherDisplay(data);
-                        } catch (e) {
-                            console.error('[Weather] Error updating weather display:', e);
-                            showWeatherError('Error displaying weather data: ' + e.message);
-                        }
+                        updateWeatherDisplay(data);
                     },
                     onError: (error) => {
                         console.error('[Weather] Fetch error:', error);

@@ -1,7 +1,6 @@
 import { createErrorResponse, createSuccessResponse } from './responses.js';
-import { validateEnvOrError } from './utils.js';
+import { validateEnvOrError, getOffTrailThreshold } from './utils.js';
 import { loadHistoricalPoints, serializePoint } from './storage.js';
-import { DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
 import { tagAndSnapPoints } from './trail-distance.js';
 
 // Points handler — reads points from KV only (cron handles KML polling)
@@ -9,8 +8,7 @@ export async function handlePoints(request, env) {
   const START_DATE_STR = env.START_DATE;
   const USE_MOCK_DATA = env.USE_MOCK_DATA === 'true';
 
-  const parsed = parseFloat(env.OFF_TRAIL_THRESHOLD);
-  const thresholdMiles = Number.isFinite(parsed) ? parsed : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
+  const thresholdMiles = getOffTrailThreshold(env);
 
   if (USE_MOCK_DATA) {
     const mockPoints = generateMockPoints(START_DATE_STR, thresholdMiles);

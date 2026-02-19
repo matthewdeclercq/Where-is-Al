@@ -1,5 +1,11 @@
-import { MS_PER_DAY, DATE_REGEX } from './constants.js';
+import { MS_PER_DAY, DATE_REGEX, DEFAULT_OFF_TRAIL_THRESHOLD_MILES } from './constants.js';
 import { createErrorResponse } from './responses.js';
+
+// Parse OFF_TRAIL_THRESHOLD env var, falling back to the default constant.
+export function getOffTrailThreshold(env) {
+  const parsed = parseFloat(env.OFF_TRAIL_THRESHOLD);
+  return Number.isFinite(parsed) ? parsed : DEFAULT_OFF_TRAIL_THRESHOLD_MILES;
+}
 
 // Get the effective elevation for a point, preferring DEM-based trailElevation over GPS elevation.
 export function getElevation(point) {
